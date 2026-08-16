@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# くらしの道しるべ
 
-## Getting Started
+生活の困りごとに、東京都のオープンデータからその場で答えを返すポータル。
+答えられない部分は限界を明示した上で公式サービスへ引き継ぐ。
 
-First, run the development server:
+設計・調査の全体は [docs/21_kurashi_michishirube_portal.md](docs/21_kurashi_michishirube_portal.md) にある。
+
+## 開発
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+チャットの分野判定に Gemini API を使う。キーが無くてもキーワード判定のフォールバックで動く。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env.local   # GEMINI_API_KEY を設定する
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## データの取り込み
 
-## Learn More
+オープンデータの取り込みは**ビルド時**に行い、生成した静的JSONをコミットする。
+実行時に都や区市町村のサーバを叩かないので、公開側の障害や遅延がこちらの障害にならず、
+壊れたデータは住民の画面に出る前にビルドで止まる。
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build:data     # 全データを取り込み直す（build:gomi + build:bouhan）
+npm run check:data     # 元データが更新されていないかだけを確認する
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`check:data` は生成JSONに残した ETag / Last-Modified で条件付きリクエストを投げるだけなので安価。
+更新を検知すると**終了コード 2** を返すので、定期実行から拾って `build:data` → 再デプロイに繋げられる。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| 簡易版 | 画面 | データ源 | 規模 |
+| :--- | :--- | :--- | :--- |
+| ごみ分別 | `/gomi` | 東京都オープンデータカタログ（自治体別CSV） | 2自治体・3,024品目 |
+| 防犯 | `/bouhan` | 警視庁 町丁別・罪種別認知件数（年累計） | 5,132町丁 |
 
-## Deploy on Vercel
+取り込み対象を増やすときは `scripts/gomi-sources.ts` に追記する。
+列名は「候補の配列」で書き、最初に中身が入っていた列が採用される
+（公開CSVには列が存在するのに全件空、というものが実在するため）。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 設計上の約束
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 答えの本文は行政のオープンデータそのもの。生成AIは分野の判定とパラメータ抽出しかしない
+- ご案内するURLはリポジトリ内のキュレーションDBに実在するIDからのみ引く。AIが生成したURLは表示しない
+- 申請・予約・申込みは代行せず、必ず公式の窓口へ送る
+- 出典・時点・カバー範囲・できないこと・公式への出口は、型（`src/types/answer.ts`）で必須にしてある。
+  書き忘れた画面はコンパイルが通らない

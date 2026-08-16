@@ -11,6 +11,8 @@
  * その件数が何の手口で構成されているかだけ。解釈は住民に委ね、注記で誤読を防ぐ。
  */
 
+import type { SourceStamp } from '../source-stamp';
+
 /** 罪種のグループ（凶悪犯・粗暴犯・侵入窃盗・非侵入窃盗・その他） */
 export type CrimeGroup = {
   /** グループ名（「侵入窃盗」など） */
@@ -34,9 +36,10 @@ export type BouhanArea = {
 
 export type BouhanDataset = {
   generatedAt: string;
+  /** 取り込み元の足跡。鮮度チェック（npm run check:data）が読む */
+  sources: SourceStamp[];
   /** 元データの更新日（HTTPの Last-Modified） */
   dataUpdatedAt?: string;
-  etag?: string;
   sourceName: string;
   sourceUrl: string;
   /** 集計年（「令和6年」） */

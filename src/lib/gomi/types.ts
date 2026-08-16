@@ -1,3 +1,5 @@
+import type { SourceStamp } from '../source-stamp';
+
 /**
  * ごみ分別簡易版のデータ型（設計書 §3.1）
  *
@@ -92,5 +94,7 @@ export type GomiMunicipality = {
 
 export type GomiDataset = {
   generatedAt: string;
+  /** 取り込み元の足跡。鮮度チェック（npm run check:data）が読む */
+  sources: SourceStamp[];
   municipalities: GomiMunicipality[];
 };

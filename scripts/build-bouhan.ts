@@ -186,8 +186,17 @@ async function main() {
 
   const dataset: BouhanDataset = {
     generatedAt: new Date().toISOString().slice(0, 10),
+    // 鮮度チェックが読む足跡
+    sources: [
+      {
+        id: 'bouhan:nenkei',
+        label: `町丁別犯罪認知件数 ${SOURCE.year}`,
+        url: SOURCE.url,
+        ...(etag ? { etag } : {}),
+        ...(dataUpdatedAt ? { dataUpdatedAt } : {}),
+      },
+    ],
     ...(dataUpdatedAt ? { dataUpdatedAt } : {}),
-    ...(etag ? { etag } : {}),
     sourceName: SOURCE.sourceName,
     sourceUrl: SOURCE.sourcePage,
     year: SOURCE.year,

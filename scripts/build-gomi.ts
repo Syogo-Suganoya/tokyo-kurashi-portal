@@ -173,6 +173,17 @@ async function main() {
 
   const dataset: GomiDataset = {
     generatedAt: new Date().toISOString().slice(0, 10),
+    // 鮮度チェックが読む足跡。自治体を増やせばここも自動で増える
+    sources: GOMI_SOURCES.map((source) => {
+      const built = municipalities.find((m) => m.code === source.code);
+      return {
+        id: `gomi:${source.code}`,
+        label: `ごみ分別 ${source.name}`,
+        url: source.url,
+        ...(built?.etag ? { etag: built.etag } : {}),
+        ...(built?.dataUpdatedAt ? { dataUpdatedAt: built.dataUpdatedAt } : {}),
+      };
+    }),
     municipalities,
   };
 
