@@ -76,7 +76,8 @@ export const SYSTEM_INSTRUCTION = `あなたは東京都の生活情報ポータ
 - ごみの捨て方・分別・粗大ごみに関する質問なら search_gomi を呼びます。
 - 品目名は住民が書いたままの言葉を item に入れます（「ペットボトル」「アイロン台」など）。
 - 区市町村が文中に無ければ municipality は省略します。推測してはいけません。
-- ごみ以外の分野は no_tool を呼び、topic に最も近い分野を選びます。`;
+- 治安・犯罪の件数・引っ越し先の比較に関する質問なら search_bouhan を呼びます。
+- 上記のどちらでもない分野は no_tool を呼び、topic に最も近い分野を選びます。`;
 
 /** @google/genai の interactions API に渡すツール宣言 */
 export const GEMINI_TOOLS = [
@@ -99,6 +100,22 @@ export const GEMINI_TOOLS = [
         },
       },
       required: ['item'],
+    },
+  },
+  {
+    type: 'function' as const,
+    name: 'search_bouhan',
+    description:
+      '町丁ごとの犯罪認知件数を、警視庁のオープンデータから調べる。答えの本文はこのツールが返す。治安の良し悪しを判定するものではない。',
+    parameters: {
+      type: 'object',
+      properties: {
+        area: {
+          type: 'string',
+          description: '町丁名または区市町村名（例: 丸の内１丁目、西新宿、立川市）',
+        },
+      },
+      required: ['area'],
     },
   },
   {

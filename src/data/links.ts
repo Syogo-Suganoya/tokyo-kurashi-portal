@@ -56,8 +56,8 @@ export const CURATED_LINKS = {
     url: 'https://www.bousai.metro.tokyo.lg.jp/1028747/',
   },
   'tokyo-bouhan-map': {
-    org: '東京都',
-    name: '東京都防犯ネットワーク「防犯マップ」',
+    org: '東京都防犯ネットワーク',
+    name: '防犯マップ',
     url: 'https://www.bouhan.metro.tokyo.lg.jp/map/?m=1',
   },
   'keishicho-hassei-map': {

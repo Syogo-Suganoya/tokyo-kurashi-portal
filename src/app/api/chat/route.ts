@@ -14,11 +14,14 @@ import { NextResponse } from 'next/server';
 import { getLink, type LinkId } from '@/data/links';
 import { routeQuery } from '@/lib/ai/route-query';
 import { TOPIC_LINKS } from '@/lib/ai/tools';
+import { searchBouhan, type BouhanSearchResult } from '@/lib/bouhan/search';
 import { searchGomi, type GomiSearchResult } from '@/lib/gomi/search';
 
 export type ChatResponse =
-  /** 簡易版が答えを返せた（または返せない理由を共通契約で返した） */
+  /** ごみ分別の簡易版が答えを返せた（または返せない理由を共通契約で返した） */
   | { type: 'answer'; via: string; item: string; municipality: string; result: GomiSearchResult }
+  /** 防犯の簡易版が答えを返せた */
+  | { type: 'bouhan'; via: string; area: string; result: BouhanSearchResult }
   /**
    * 自治体が特定できないので1問だけ聞き返す（設計書 §4.3）。
    * 推測で答えない。分別ルールは自治体ごとに違うため、推測は誤情報になる
@@ -50,6 +53,15 @@ export async function POST(request: Request): Promise<NextResponse<ChatResponse>
 
   const { routed, via, fallbackReason } = await routeQuery(message);
   const viaLabel = via === 'gemini' ? 'Gemini' : `キーワード判定（${fallbackReason ?? '—'}）`;
+
+  if (routed.tool === 'search_bouhan') {
+    return NextResponse.json({
+      type: 'bouhan',
+      via: viaLabel,
+      area: routed.area,
+      result: searchBouhan({ area: routed.area }),
+    });
+  }
 
   if (routed.tool === 'no_tool') {
     const topic = TOPIC_LINKS[routed.topic];

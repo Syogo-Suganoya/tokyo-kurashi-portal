@@ -12,6 +12,7 @@
 import { GoogleGenAI } from '@google/genai';
 
 import { MUNICIPALITIES } from '@/data/municipalities';
+import { TOKYO_MUNICIPALITIES } from '@/data/tokyo-municipalities';
 
 import { GEMINI_TOOLS, KNOWN_TOPICS, SYSTEM_INSTRUCTION, type KnownTopic } from './tools';
 
@@ -19,6 +20,7 @@ const MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
 
 export type RoutedQuery =
   | { tool: 'search_gomi'; item: string; municipality?: string }
+  | { tool: 'search_bouhan'; area: string }
   | { tool: 'no_tool'; topic: KnownTopic };
 
 export type RouteOutcome = {
@@ -72,6 +74,11 @@ function toRoutedQuery(name: string, args: Record<string, unknown>): RoutedQuery
         : undefined;
     return { tool: 'search_gomi', item, municipality };
   }
+  if (name === 'search_bouhan') {
+    const area = typeof args.area === 'string' ? args.area.trim() : '';
+    if (!area) return null;
+    return { tool: 'search_bouhan', area };
+  }
   if (name === 'no_tool') {
     const topic = typeof args.topic === 'string' ? args.topic : '';
     return {
@@ -85,6 +92,9 @@ function toRoutedQuery(name: string, args: Record<string, unknown>): RoutedQuery
 // --- 以下、LLMを使わないフォールバック（設計書 §4.4） ---
 
 const GOMI_TRIGGER = /ごみ|ゴミ|捨て|すて|分別|粗大|処分|リサイクル/;
+const BOUHAN_TRIGGER = /防犯|治安|犯罪|認知件数|空き巣|ひったくり|引っ越し先/;
+/** 「西新宿７丁目」のような町丁名。全角・半角・漢数字に対応する */
+const TOWN_PATTERN = /[^\s、。]{1,12}?[０-９0-9一二三四五六七八九十]+丁目/;
 
 const TOPIC_TRIGGERS: ReadonlyArray<readonly [RegExp, KnownTopic]> = [
   [/防災|地震|台風|避難|災害/, 'bousai'],
@@ -109,6 +119,13 @@ export function fallbackRoute(message: string): RoutedQuery {
     if (municipality) item = item.replace(municipality, '');
     item = item.replace(ITEM_TRAILERS, '').replace(/[、,\s]+$/, '').trim();
     return { tool: 'search_gomi', item: item || text, municipality };
+  }
+
+  if (BOUHAN_TRIGGER.test(text)) {
+    // 場所が取り出せないと件数は出せない。取り出せなければ地図の公式サービスへ送る
+    const area = TOWN_PATTERN.exec(text)?.[0] ?? TOKYO_MUNICIPALITIES.find((m) => text.includes(m));
+    if (area) return { tool: 'search_bouhan', area };
+    return { tool: 'no_tool', topic: 'bouhan' };
   }
 
   for (const [pattern, topic] of TOPIC_TRIGGERS) {

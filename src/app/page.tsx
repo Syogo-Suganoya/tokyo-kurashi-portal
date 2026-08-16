@@ -23,7 +23,8 @@ const TIERS: TierRow[] = [
     tier: 'A',
     meaning: '都全域の一括データがある',
     themes: '防犯 / 学び・体験 / バリアフリー',
-    stance: '自前の簡易版を作る（未着手）',
+    stance: '自前の簡易版で答える（防犯のみ実装済み）',
+    built: true,
   },
   {
     tier: 'B',
@@ -62,17 +63,30 @@ export default function Home() {
 
       <section className="mt-10">
         <h2 className="text-sm font-semibold text-muted">チャットを使わずに調べる</h2>
-        <Link
-          href="/gomi"
-          className="mt-3 block rounded-xl border border-line bg-surface p-6 transition-colors hover:border-accent"
-        >
-          <p className="text-xl font-bold">ごみの分別を調べる</p>
-          <p className="mt-2 text-sm leading-relaxed text-muted">
-            立川市・中野区に対応。品目名を入れると、その自治体の公式表記のまま分別区分・注意点・
-            粗大ごみ料金をお答えします。未対応の区市町村は公式ページへご案内します。
-          </p>
-          <p className="mt-3 text-sm font-semibold text-accent">調べる →</p>
-        </Link>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <Link
+            href="/gomi"
+            className="block rounded-xl border border-line bg-surface p-6 transition-colors hover:border-accent"
+          >
+            <p className="text-xl font-bold">ごみの分別を調べる</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              立川市・中野区に対応。品目名を入れると、その自治体の公式表記のまま分別区分・注意点・
+              粗大ごみ料金をお答えします。未対応の区市町村は公式ページへご案内します。
+            </p>
+            <p className="mt-3 text-sm font-semibold text-accent">調べる →</p>
+          </Link>
+          <Link
+            href="/bouhan"
+            className="block rounded-xl border border-line bg-surface p-6 transition-colors hover:border-accent"
+          >
+            <p className="text-xl font-bold">町丁ごとの犯罪認知件数を調べる</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              都内5,132町丁に対応。2つ入力すると並べて比べられます。件数の多さは危険さを意味しないため、
+              何の手口でその件数になっているかを必ず併せて表示します。
+            </p>
+            <p className="mt-3 text-sm font-semibold text-accent">調べる →</p>
+          </Link>
+        </div>
       </section>
 
       <section className="mt-12">

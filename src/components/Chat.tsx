@@ -7,6 +7,7 @@
  * 答えは `/gomi` と同じ AnswerCard で描く。共通画面契約は経路が変わっても同じ（設計書 §3）。
  */
 
+import Link from 'next/link';
 import { useRef, useState } from 'react';
 
 import { AnswerCard } from '@/components/AnswerCard';
@@ -16,6 +17,7 @@ import type { ChatResponse } from '@/app/api/chat/route';
 const EXAMPLES = [
   'ペットボトルってどう捨てるの？',
   'アイロン台を捨てたい',
+  '西新宿７丁目の治安が知りたい',
   '近くのAEDを探したい',
 ];
 
@@ -197,9 +199,20 @@ function ChatAnswer({
     );
   }
 
+  // answer（ごみ分別）と bouhan（防犯）はどちらも共通画面契約なので同じ描き方でよい
   return (
     <div>
       <AnswerCard result={response.result} />
+      {response.type === 'bouhan' && (
+        <p className="mt-2 text-xs">
+          <Link
+            href={`/bouhan?a=${encodeURIComponent(response.area)}`}
+            className="text-accent underline underline-offset-2 hover:no-underline"
+          >
+            もう1つの町丁と並べて比べる →
+          </Link>
+        </p>
+      )}
       <ViaNote via={response.via} />
     </div>
   );
