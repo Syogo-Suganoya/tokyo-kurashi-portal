@@ -8,6 +8,8 @@
 
 import Link from 'next/link';
 
+import { Chat } from '@/components/Chat';
+
 type TierRow = {
   tier: 'A' | 'B' | 'C' | 'D';
   meaning: string;
@@ -55,7 +57,11 @@ export default function Home() {
       </p>
 
       <section className="mt-10">
-        <h2 className="text-sm font-semibold text-muted">いま使えるもの</h2>
+        <Chat />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="text-sm font-semibold text-muted">チャットを使わずに調べる</h2>
         <Link
           href="/gomi"
           className="mt-3 block rounded-xl border border-line bg-surface p-6 transition-colors hover:border-accent"

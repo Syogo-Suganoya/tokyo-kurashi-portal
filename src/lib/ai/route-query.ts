@@ -1,0 +1,125 @@
+/**
+ * 困りごとの文 → 「どのツールをどんなパラメータで呼ぶか」の決定（設計書 §4）
+ *
+ * Gemini API の function calling を使う。ここが返すのはツール名と引数だけで、
+ * 住民に見せる答えの本文は一切含まない。
+ *
+ * APIキーが無いとき・API障害時は、キーワード一致のフォールバックに落ちる（設計書 §4.4）。
+ * デモ当日にAPIが不調でも画面が死なないための保険であり、
+ * 「AIが落ちたら何も答えられない」構造にしないための設計でもある。
+ */
+
+import { GoogleGenAI } from '@google/genai';
+
+import { MUNICIPALITIES } from '@/data/municipalities';
+
+import { GEMINI_TOOLS, KNOWN_TOPICS, SYSTEM_INSTRUCTION, type KnownTopic } from './tools';
+
+const MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
+
+export type RoutedQuery =
+  | { tool: 'search_gomi'; item: string; municipality?: string }
+  | { tool: 'no_tool'; topic: KnownTopic };
+
+export type RouteOutcome = {
+  routed: RoutedQuery;
+  /** どちらの経路で決まったか。画面に出して、AIが落ちていることを隠さない */
+  via: 'gemini' | 'fallback';
+  /** フォールバックに落ちた理由 */
+  fallbackReason?: string;
+};
+
+export async function routeQuery(message: string): Promise<RouteOutcome> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return { routed: fallbackRoute(message), via: 'fallback', fallbackReason: 'APIキー未設定' };
+  }
+
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    const interaction = await ai.interactions.create({
+      model: MODEL,
+      system_instruction: SYSTEM_INSTRUCTION,
+      input: message,
+      tools: GEMINI_TOOLS,
+    });
+
+    for (const step of interaction.steps ?? []) {
+      if (step.type !== 'function_call') continue;
+      const routed = toRoutedQuery(step.name, step.arguments);
+      if (routed) return { routed, via: 'gemini' };
+    }
+    // ツールを呼ばずに文章で返してきた場合。その文章は使わない（AIに答えさせない §4.2）
+    return { routed: fallbackRoute(message), via: 'fallback', fallbackReason: 'ツールが選ばれなかった' };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    console.error('[routeQuery] Gemini呼び出しに失敗:', reason);
+    return { routed: fallbackRoute(message), via: 'fallback', fallbackReason: 'API呼び出しに失敗' };
+  }
+}
+
+/**
+ * AIの出力を、こちらが受け付ける形だけに絞り込む。
+ * 知らないツール名・知らない分野は捨てる。AIの出力をそのまま信用しない。
+ */
+function toRoutedQuery(name: string, args: Record<string, unknown>): RoutedQuery | null {
+  if (name === 'search_gomi') {
+    const item = typeof args.item === 'string' ? args.item.trim() : '';
+    if (!item) return null;
+    const municipality =
+      typeof args.municipality === 'string' && args.municipality.trim()
+        ? args.municipality.trim()
+        : undefined;
+    return { tool: 'search_gomi', item, municipality };
+  }
+  if (name === 'no_tool') {
+    const topic = typeof args.topic === 'string' ? args.topic : '';
+    return {
+      tool: 'no_tool',
+      topic: (KNOWN_TOPICS as readonly string[]).includes(topic) ? (topic as KnownTopic) : 'other',
+    };
+  }
+  return null;
+}
+
+// --- 以下、LLMを使わないフォールバック（設計書 §4.4） ---
+
+const GOMI_TRIGGER = /ごみ|ゴミ|捨て|すて|分別|粗大|処分|リサイクル/;
+
+const TOPIC_TRIGGERS: ReadonlyArray<readonly [RegExp, KnownTopic]> = [
+  [/防災|地震|台風|避難|災害/, 'bousai'],
+  [/防犯|治安|犯罪|不審/, 'bouhan'],
+  [/AED|病院|医療|救急|健康/i, 'kenko'],
+  [/こども食堂|子ども食堂|食堂/, 'fukushi'],
+  [/子育て|保育|若者|相談/, 'kodomo'],
+  [/税金|都税|予算|使い道/, 'zeikin'],
+  [/観光|旅行|お出かけ|名所/, 'kanko'],
+];
+
+/** 品目名の抽出。文末の言い回しを削るだけの素朴な処理でよい（緊急経路なので） */
+const ITEM_TRAILERS =
+  /(は|を|って|の|が)?\s*(どこに|どうやって|どのように|どう)?\s*(捨て[らるれ]?[ばるた]?[いのんですかまし]*|すて[らるれ]?[ばるた]?[いのんですかまし]*|処分|分別|出せ[ばるた]?[いのんですかまし]*|出し方|捨て方)[^。]*[。？?]?$/;
+
+export function fallbackRoute(message: string): RoutedQuery {
+  const text = message.trim();
+
+  if (GOMI_TRIGGER.test(text)) {
+    const municipality = MUNICIPALITIES.find((m) => text.includes(m.name))?.name;
+    let item = text;
+    if (municipality) item = item.replace(municipality, '');
+    item = item.replace(ITEM_TRAILERS, '').replace(/[、,\s]+$/, '').trim();
+    return { tool: 'search_gomi', item: item || text, municipality };
+  }
+
+  for (const [pattern, topic] of TOPIC_TRIGGERS) {
+    if (pattern.test(text)) return { tool: 'no_tool', topic };
+  }
+
+  // 「ペットボトル」のように品目名だけを打った場合。どの分野のキーワードにも当たらず、
+  // 質問の形もしていない短い語なら、持っている唯一の簡易版で引いてみる。
+  // 外れても「見つかりませんでした」＋公式への案内が返るだけで、誤った答えにはならない
+  if (text.length <= 20 && !/[？?]/.test(text)) {
+    return { tool: 'search_gomi', item: text };
+  }
+  return { tool: 'no_tool', topic: 'other' };
+}
