@@ -79,6 +79,11 @@ async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> 
   }
   const { text, encoding } = decodeCsv(Buffer.from(await res.arrayBuffer()));
 
+  // 元データがいつ更新されたか。取得日ではなくこちらを画面に出す
+  const lastModified = res.headers.get('last-modified');
+  const dataUpdatedAt = lastModified ? new Date(lastModified).toISOString().slice(0, 10) : undefined;
+  const etag = res.headers.get('etag') ?? undefined;
+
   const rows = parse(text, {
     columns: true,
     skip_empty_lines: true,
@@ -132,7 +137,7 @@ async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> 
 
   const kanaFilled = kanaCol ? kanaCol.filled : 0;
   console.log(
-    `  ${source.name}: ${items.length}件 / encoding=${encoding} / ` +
+    `  ${source.name}: ${items.length}件 / 元データ更新日=${dataUpdatedAt ?? '不明'} / encoding=${encoding} / ` +
       `品目=${itemCol.column} 区分=${categoryCol.column} ` +
       `注意点=${noteCol?.column ?? '—'}(${noteCol?.filled ?? 0}件) ` +
       `カナ=${kanaCol?.column ?? '—'}(${kanaFilled}件) ` +
@@ -150,6 +155,8 @@ async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> 
     sourceName: source.sourceName,
     sourceUrl: source.sourcePage,
     fetchedAt: new Date().toISOString().slice(0, 10),
+    ...(dataUpdatedAt ? { dataUpdatedAt } : {}),
+    ...(etag ? { etag } : {}),
     // 列があっても中身が空なら false。立川市のカナ列がこれに当たる
     hasKana: kanaFilled > 0,
     hasFee: (feeCol?.filled ?? 0) > 0,

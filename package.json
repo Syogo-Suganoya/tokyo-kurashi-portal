@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "build:gomi": "tsx scripts/build-gomi.ts"
+    "build:gomi": "tsx scripts/build-gomi.ts",
+    "check:gomi": "tsx scripts/check-gomi.ts"
   },
   "dependencies": {
     "next": "16.3.1",

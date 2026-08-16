@@ -51,8 +51,11 @@ function provenanceOf(data: GomiMunicipality): Provenance {
   return {
     sourceName: data.sourceName,
     sourceUrl: data.sourceUrl,
-    // 元データに更新日の記載が無いので、分かることだけを書く。「令和X年度時点」と偽らない
-    asOf: `${data.fetchedAt} 取得（データ自体の更新日は自治体の公開に依存します）`,
+    // 住民にとって意味があるのは「いつ取ってきたか」ではなく「行政がいつ更新したデータか」。
+    // Last-Modified が取れていればそれを主に出し、取得日は補足に回す
+    asOf: data.dataUpdatedAt
+      ? `${data.dataUpdatedAt} 更新のデータです（${data.fetchedAt} 取得）`
+      : `${data.fetchedAt} 取得（元データの更新日は公開されていません）`,
     coverage: COVERAGE,
   };
 }
@@ -153,7 +156,9 @@ export function searchGomi(query: GomiQuery): GomiSearchResult {
     escalations: [
       {
         kind: 'freshness',
-        reason: `${data.fetchedAt} に取得したデータです。分別ルールは変わることがあるため、最新は公式でご確認ください。`,
+        reason: data.dataUpdatedAt
+          ? `${data.dataUpdatedAt} に更新されたデータです。分別ルールは変わることがあるため、最新は公式でご確認ください。`
+          : '分別ルールは変わることがあります。最新は公式でご確認ください。',
         linkId: municipality.officialLinkId,
       },
       ...extraEscalations,

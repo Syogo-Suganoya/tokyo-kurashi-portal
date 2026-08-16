@@ -73,8 +73,16 @@ export type GomiMunicipality = {
   name: string;
   sourceName: string;
   sourceUrl: string;
-  /** CSVを取得した日。データ自体の更新日は各自治体の公開に依存するため、取得日を正直に出す */
+  /** CSVを取得した日 */
   fetchedAt: string;
+  /**
+   * 元CSVの更新日（HTTPの Last-Modified）。住民にとって意味があるのは取得日ではなくこちら。
+   * 「いつ取ってきたか」ではなく「行政がいつ更新したデータか」を画面に出す。
+   * ヘッダを返さないサーバもあるため任意。
+   */
+  dataUpdatedAt?: string;
+  /** 更新確認（npm run check:gomi）用。条件付きリクエストに使う */
+  etag?: string;
   /** カナ検索が使えるか（カナ列が存在し、かつ中身が空でないか） */
   hasKana: boolean;
   /** 粗大ごみ料金を答えられるか */
