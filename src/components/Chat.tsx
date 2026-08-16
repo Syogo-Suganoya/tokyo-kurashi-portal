@@ -18,6 +18,7 @@ const EXAMPLES = [
   'ペットボトルってどう捨てるの？',
   'アイロン台を捨てたい',
   '西新宿７丁目の治安が知りたい',
+  '車椅子で入れるお店を探したい',
   '近くのAEDを探したい',
 ];
 
@@ -220,6 +221,16 @@ function ChatAnswer({
             className="text-accent underline underline-offset-2 hover:no-underline"
           >
             地図で見る →
+          </Link>
+        </p>
+      )}
+      {response.type === 'barrierfree' && (
+        <p className="mt-2 text-xs">
+          <Link
+            href={`/barrierfree?${response.query}`}
+            className="text-accent underline underline-offset-2 hover:no-underline"
+          >
+            条件を足して絞り込む →
           </Link>
         </p>
       )}

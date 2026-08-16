@@ -1,7 +1,7 @@
 /**
  * トップページ
  *
- * AIチャットはまだ載せていないので、`/gomi` への導線と、
+ * 困りごとチャットと、簡易版4本への導線、そして
  * 「どのテーマを自前で持ち、どれを既存サービスに委ねたか」の判断（設計書 §2 のTier分類）を出す。
  * この判断そのものを画面に出すこと自体が設計の主張（設計書 §2.3）。
  */
@@ -23,7 +23,7 @@ const TIERS: TierRow[] = [
     tier: 'A',
     meaning: '都全域の一括データがある',
     themes: '防犯 / 学び・体験 / バリアフリー',
-    stance: '自前の簡易版で答える（バリアフリーが未着手）',
+    stance: '自前の簡易版で答える',
     built: true,
   },
   {
@@ -96,6 +96,18 @@ export default function Home() {
               種別ごとに別サイトに分かれている現状に対して、種別をまたいで「近くで子どもと行ける場所」を探せます。
             </p>
             <p className="mt-3 text-sm font-semibold text-accent">地図でさがす →</p>
+          </Link>
+          <Link
+            href="/barrierfree"
+            className="block rounded-xl border border-line bg-surface p-6 transition-colors hover:border-accent sm:col-span-2"
+          >
+            <p className="text-xl font-bold">車椅子で行ける場所をさがす</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              産業労働局・福祉局・交通局が別々に公開している飲食店・鉄道駅・公共施設のデータ6,278か所を、
+              「車椅子で行けるか」の1軸に束ねて条件で絞り込めます。
+              「なし」と書かれていない限り「なし」とは表示しません。
+            </p>
+            <p className="mt-3 text-sm font-semibold text-accent">条件でさがす →</p>
           </Link>
         </div>
       </section>

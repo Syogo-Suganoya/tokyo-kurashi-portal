@@ -17,6 +17,7 @@
 
 import type { LinkId } from '@/data/links';
 import { MANABI_KINDS } from '@/lib/manabi/search';
+import { FEATURE_KEYS, FEATURE_LABEL } from '@/lib/barrierfree/types';
 
 /** AIに提示する施設区分。取り込んだデータの区分そのものなので、勝手な区分名は出てこない */
 const MANABI_KIND_NAMES = MANABI_KINDS;
@@ -82,6 +83,7 @@ export const SYSTEM_INSTRUCTION = `あなたは東京都の生活情報ポータ
 - 区市町村が文中に無ければ municipality は省略します。推測してはいけません。
 - 治安・犯罪の件数・引っ越し先の比較に関する質問なら search_bouhan を呼びます。
 - 図書館・博物館・公民館・青少年施設など、学びや体験ができる場所を探す質問なら search_manabi を呼びます。
+- 車椅子・バリアフリー・オストメイトなど、行ける場所の設備に関する質問なら search_barrierfree を呼びます。
 - 上記のいずれでもない分野は no_tool を呼び、topic に最も近い分野を選びます。`;
 
 /** @google/genai の interactions API に渡すツール宣言 */
@@ -144,6 +146,29 @@ export const GEMINI_TOOLS = [
           type: 'string',
           description: '施設名や所在地に含まれるキーワード。無ければ省略する',
         },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    name: 'search_barrierfree',
+    description:
+      '車椅子で行ける飲食店・鉄道駅・公共施設を、必要な設備の条件で探す。答えの本文はこのツールが返す。',
+    parameters: {
+      type: 'object',
+      properties: {
+        features: {
+          type: 'array',
+          items: { type: 'string', enum: [...FEATURE_KEYS] },
+          description: `必要な設備。${FEATURE_KEYS.map((k) => `${k}=${FEATURE_LABEL[k]}`).join('、')}`,
+        },
+        category: {
+          type: 'string',
+          enum: ['restaurant', 'station', 'facility'],
+          description: '場所の種類。指定が無ければ省略する',
+        },
+        municipality: { type: 'string', description: '区市町村名。文中に無ければ省略する' },
+        q: { type: 'string', description: '名前や住所のキーワード。無ければ省略する' },
       },
     },
   },

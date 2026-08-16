@@ -17,6 +17,7 @@ import { TOPIC_LINKS } from '@/lib/ai/tools';
 import { searchBouhan, type BouhanSearchResult } from '@/lib/bouhan/search';
 import { searchGomi, type GomiSearchResult } from '@/lib/gomi/search';
 import { searchManabi, type ManabiSearchResult } from '@/lib/manabi/search';
+import { searchBarrierFree, type BarrierFreeSearchResult } from '@/lib/barrierfree/search';
 
 export type ChatResponse =
   /** ごみ分別の簡易版が答えを返せた（または返せない理由を共通契約で返した） */
@@ -25,6 +26,8 @@ export type ChatResponse =
   | { type: 'bouhan'; via: string; area: string; result: BouhanSearchResult }
   /** 学びと体験の場の簡易版が答えを返せた */
   | { type: 'manabi'; via: string; query: string; result: ManabiSearchResult }
+  /** バリアフリーの簡易版が答えを返せた */
+  | { type: 'barrierfree'; via: string; query: string; result: BarrierFreeSearchResult }
   /**
    * 自治体が特定できないので1問だけ聞き返す（設計書 §4.3）。
    * 推測で答えない。分別ルールは自治体ごとに違うため、推測は誤情報になる
@@ -77,6 +80,20 @@ export async function POST(request: Request): Promise<NextResponse<ChatResponse>
       // 地図で見たい人を /manabi へ渡すためのクエリ文字列
       query: query.toString(),
       result: searchManabi(routed),
+    });
+  }
+
+  if (routed.tool === 'search_barrierfree') {
+    const query = new URLSearchParams();
+    for (const feature of routed.features ?? []) query.append('f', feature);
+    if (routed.category) query.set('c', routed.category);
+    if (routed.municipality) query.set('m', routed.municipality);
+    if (routed.q) query.set('q', routed.q);
+    return NextResponse.json({
+      type: 'barrierfree',
+      via: viaLabel,
+      query: query.toString(),
+      result: searchBarrierFree(routed),
     });
   }
 

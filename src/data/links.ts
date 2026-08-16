@@ -61,6 +61,13 @@ export const CURATED_LINKS = {
     url: 'https://www.kyoiku.metro.tokyo.lg.jp/',
   },
 
+  // --- バリアフリー ---
+  'daredemo-tokyo': {
+    org: '東京都',
+    name: 'だれでも東京（バリアフリー情報ポータル）',
+    url: 'https://www.daredemo-tokyo.metro.tokyo.lg.jp/',
+  },
+
   // --- 他テーマ（Tier C・Dの主回答。今回は未使用だが §10 の初期データとして保持） ---
   'tokyo-bousai': {
     org: '東京都',
