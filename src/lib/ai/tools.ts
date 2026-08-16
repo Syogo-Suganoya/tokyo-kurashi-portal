@@ -16,6 +16,10 @@
  */
 
 import type { LinkId } from '@/data/links';
+import { MANABI_KINDS } from '@/lib/manabi/search';
+
+/** AIに提示する施設区分。取り込んだデータの区分そのものなので、勝手な区分名は出てこない */
+const MANABI_KIND_NAMES = MANABI_KINDS;
 
 /** `no_tool` が返せる分野。自由記述ではなく閉じた列挙にすることが要点 */
 export const KNOWN_TOPICS = [
@@ -77,7 +81,8 @@ export const SYSTEM_INSTRUCTION = `あなたは東京都の生活情報ポータ
 - 品目名は住民が書いたままの言葉を item に入れます（「ペットボトル」「アイロン台」など）。
 - 区市町村が文中に無ければ municipality は省略します。推測してはいけません。
 - 治安・犯罪の件数・引っ越し先の比較に関する質問なら search_bouhan を呼びます。
-- 上記のどちらでもない分野は no_tool を呼び、topic に最も近い分野を選びます。`;
+- 図書館・博物館・公民館・青少年施設など、学びや体験ができる場所を探す質問なら search_manabi を呼びます。
+- 上記のいずれでもない分野は no_tool を呼び、topic に最も近い分野を選びます。`;
 
 /** @google/genai の interactions API に渡すツール宣言 */
 export const GEMINI_TOOLS = [
@@ -116,6 +121,30 @@ export const GEMINI_TOOLS = [
         },
       },
       required: ['area'],
+    },
+  },
+  {
+    type: 'function' as const,
+    name: 'search_manabi',
+    description:
+      '図書館・博物館・公民館・青少年施設など、東京都内の社会教育施設を探す。答えの本文はこのツールが返す。',
+    parameters: {
+      type: 'object',
+      properties: {
+        municipality: {
+          type: 'string',
+          description: '区市町村名（例: 中野区、立川市）。文中に無ければ省略する。推測しない',
+        },
+        kinds: {
+          type: 'array',
+          items: { type: 'string', enum: [...MANABI_KIND_NAMES] },
+          description: '施設の種類。指定が無ければ省略して全種別を対象にする',
+        },
+        q: {
+          type: 'string',
+          description: '施設名や所在地に含まれるキーワード。無ければ省略する',
+        },
+      },
     },
   },
   {

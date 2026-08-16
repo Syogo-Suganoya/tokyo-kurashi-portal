@@ -49,6 +49,18 @@ export const CURATED_LINKS = {
     url: 'https://www.city.tachikawa.lg.jp/kurashi/gomi/1001712/1001732/index.html',
   },
 
+  // --- 学びと体験の場 ---
+  'tokyo-syougai-gakushu': {
+    org: '東京都',
+    name: '東京都生涯学習情報',
+    url: 'https://www.syougai.metro.tokyo.lg.jp/',
+  },
+  'tokyo-kyoiku': {
+    org: '東京都教育委員会',
+    name: '公式ホームページ',
+    url: 'https://www.kyoiku.metro.tokyo.lg.jp/',
+  },
+
   // --- 他テーマ（Tier C・Dの主回答。今回は未使用だが §10 の初期データとして保持） ---
   'tokyo-bousai': {
     org: '東京都',

@@ -213,6 +213,16 @@ function ChatAnswer({
           </Link>
         </p>
       )}
+      {response.type === 'manabi' && response.result.facilities.length > 0 && (
+        <p className="mt-2 text-xs">
+          <Link
+            href={`/manabi?${response.query}`}
+            className="text-accent underline underline-offset-2 hover:no-underline"
+          >
+            地図で見る →
+          </Link>
+        </p>
+      )}
       <ViaNote via={response.via} />
     </div>
   );

@@ -23,7 +23,7 @@ const TIERS: TierRow[] = [
     tier: 'A',
     meaning: '都全域の一括データがある',
     themes: '防犯 / 学び・体験 / バリアフリー',
-    stance: '自前の簡易版で答える（防犯のみ実装済み）',
+    stance: '自前の簡易版で答える（バリアフリーが未着手）',
     built: true,
   },
   {
@@ -85,6 +85,17 @@ export default function Home() {
               何の手口でその件数になっているかを必ず併せて表示します。
             </p>
             <p className="mt-3 text-sm font-semibold text-accent">調べる →</p>
+          </Link>
+          <Link
+            href="/manabi"
+            className="block rounded-xl border border-line bg-surface p-6 transition-colors hover:border-accent sm:col-span-2"
+          >
+            <p className="text-xl font-bold">学びと体験の場をさがす</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              図書館・博物館・公民館・青少年施設など9種別849施設を1つの地図に統合。
+              種別ごとに別サイトに分かれている現状に対して、種別をまたいで「近くで子どもと行ける場所」を探せます。
+            </p>
+            <p className="mt-3 text-sm font-semibold text-accent">地図でさがす →</p>
           </Link>
         </div>
       </section>

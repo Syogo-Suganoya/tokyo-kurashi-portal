@@ -16,12 +16,15 @@ import { routeQuery } from '@/lib/ai/route-query';
 import { TOPIC_LINKS } from '@/lib/ai/tools';
 import { searchBouhan, type BouhanSearchResult } from '@/lib/bouhan/search';
 import { searchGomi, type GomiSearchResult } from '@/lib/gomi/search';
+import { searchManabi, type ManabiSearchResult } from '@/lib/manabi/search';
 
 export type ChatResponse =
   /** ごみ分別の簡易版が答えを返せた（または返せない理由を共通契約で返した） */
   | { type: 'answer'; via: string; item: string; municipality: string; result: GomiSearchResult }
   /** 防犯の簡易版が答えを返せた */
   | { type: 'bouhan'; via: string; area: string; result: BouhanSearchResult }
+  /** 学びと体験の場の簡易版が答えを返せた */
+  | { type: 'manabi'; via: string; query: string; result: ManabiSearchResult }
   /**
    * 自治体が特定できないので1問だけ聞き返す（設計書 §4.3）。
    * 推測で答えない。分別ルールは自治体ごとに違うため、推測は誤情報になる
@@ -60,6 +63,20 @@ export async function POST(request: Request): Promise<NextResponse<ChatResponse>
       via: viaLabel,
       area: routed.area,
       result: searchBouhan({ area: routed.area }),
+    });
+  }
+
+  if (routed.tool === 'search_manabi') {
+    const query = new URLSearchParams();
+    if (routed.municipality) query.set('m', routed.municipality);
+    for (const kind of routed.kinds ?? []) query.append('k', kind);
+    if (routed.q) query.set('q', routed.q);
+    return NextResponse.json({
+      type: 'manabi',
+      via: viaLabel,
+      // 地図で見たい人を /manabi へ渡すためのクエリ文字列
+      query: query.toString(),
+      result: searchManabi(routed),
     });
   }
 

@@ -9,11 +9,15 @@
     "lint": "eslint",
     "build:gomi": "tsx scripts/build-gomi.ts",
     "build:bouhan": "tsx scripts/build-bouhan.ts",
-    "build:data": "npm run build:gomi && npm run build:bouhan",
-    "check:data": "tsx scripts/check-freshness.ts"
+    "build:data": "npm run build:gomi && npm run build:bouhan && npm run build:manabi",
+    "check:data": "tsx scripts/check-freshness.ts",
+    "build:manabi": "tsx scripts/build-manabi.ts",
+    "predev": "node scripts/copy-map-worker.mjs",
+    "prebuild": "node scripts/copy-map-worker.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.17.1",
+    "maplibre-gl": "^6.4.0",
     "next": "16.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"

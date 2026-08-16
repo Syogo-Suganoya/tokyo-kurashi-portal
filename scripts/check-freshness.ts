@@ -23,7 +23,7 @@
  * このスクリプトを書き足す必要は無い。
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,12 +31,15 @@ import type { SourceStamp } from '../src/lib/source-stamp';
 
 const GENERATED_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../src/data/generated');
 
-/** 生成物のファイル名。取り込みスクリプトを増やしたらここに1行足す */
-const DATASETS = ['gomi.json', 'bouhan.json'];
-
+/**
+ * 生成物は一覧を持たずディレクトリを走査して拾う。
+ * ファイル名を手で登録する作りにすると、簡易版を増やしたときに登録を忘れ、
+ * 「鮮度チェックは通るのに一部のデータだけ確認されていない」という状態を作ってしまう。
+ */
 function collectStamps(): SourceStamp[] {
   const stamps: SourceStamp[] = [];
-  for (const file of DATASETS) {
+  const files = readdirSync(GENERATED_DIR).filter((f) => f.endsWith('.json'));
+  for (const file of files) {
     const path = resolve(GENERATED_DIR, file);
     let parsed: { sources?: SourceStamp[] };
     try {

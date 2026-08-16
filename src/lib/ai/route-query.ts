@@ -13,6 +13,7 @@ import { GoogleGenAI } from '@google/genai';
 
 import { MUNICIPALITIES } from '@/data/municipalities';
 import { TOKYO_MUNICIPALITIES } from '@/data/tokyo-municipalities';
+import { MANABI_KINDS } from '@/lib/manabi/search';
 
 import { GEMINI_TOOLS, KNOWN_TOPICS, SYSTEM_INSTRUCTION, type KnownTopic } from './tools';
 
@@ -21,6 +22,7 @@ const MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
 export type RoutedQuery =
   | { tool: 'search_gomi'; item: string; municipality?: string }
   | { tool: 'search_bouhan'; area: string }
+  | { tool: 'search_manabi'; municipality?: string; kinds?: string[]; q?: string }
   | { tool: 'no_tool'; topic: KnownTopic };
 
 export type RouteOutcome = {
@@ -79,6 +81,20 @@ function toRoutedQuery(name: string, args: Record<string, unknown>): RoutedQuery
     if (!area) return null;
     return { tool: 'search_bouhan', area };
   }
+  if (name === 'search_manabi') {
+    // 施設区分はこちらが持っている区分名だけを通す。AIが作った区分名は捨てる
+    const kinds = Array.isArray(args.kinds)
+      ? args.kinds.filter((k): k is string => typeof k === 'string' && MANABI_KINDS.includes(k))
+      : [];
+    return {
+      tool: 'search_manabi',
+      ...(typeof args.municipality === 'string' && args.municipality.trim()
+        ? { municipality: args.municipality.trim() }
+        : {}),
+      ...(kinds.length > 0 ? { kinds } : {}),
+      ...(typeof args.q === 'string' && args.q.trim() ? { q: args.q.trim() } : {}),
+    };
+  }
   if (name === 'no_tool') {
     const topic = typeof args.topic === 'string' ? args.topic : '';
     return {
@@ -93,6 +109,8 @@ function toRoutedQuery(name: string, args: Record<string, unknown>): RoutedQuery
 
 const GOMI_TRIGGER = /ごみ|ゴミ|捨て|すて|分別|粗大|処分|リサイクル/;
 const BOUHAN_TRIGGER = /防犯|治安|犯罪|認知件数|空き巣|ひったくり|引っ越し先/;
+const MANABI_TRIGGER =
+  /図書館|博物館|美術館|公民館|青少年|生涯学習|資料館|こどもと行|子どもと行|学べる|体験できる/;
 /** 「西新宿７丁目」のような町丁名。全角・半角・漢数字に対応する */
 const TOWN_PATTERN = /[^\s、。]{1,12}?[０-９0-9一二三四五六七八九十]+丁目/;
 
@@ -119,6 +137,16 @@ export function fallbackRoute(message: string): RoutedQuery {
     if (municipality) item = item.replace(municipality, '');
     item = item.replace(ITEM_TRAILERS, '').replace(/[、,\s]+$/, '').trim();
     return { tool: 'search_gomi', item: item || text, municipality };
+  }
+
+  if (MANABI_TRIGGER.test(text)) {
+    const municipality = TOKYO_MUNICIPALITIES.find((m) => text.includes(m));
+    const kinds = MANABI_KINDS.filter((k) => text.includes(k));
+    return {
+      tool: 'search_manabi',
+      ...(municipality ? { municipality } : {}),
+      ...(kinds.length > 0 ? { kinds } : {}),
+    };
   }
 
   if (BOUHAN_TRIGGER.test(text)) {
