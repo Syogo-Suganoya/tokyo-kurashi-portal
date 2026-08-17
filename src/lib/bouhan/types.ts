@@ -32,6 +32,16 @@ export type BouhanArea = {
   s: string;
   /** 全列の値。列名は BouhanDataset.cols と同じ並び */
   v: number[];
+  /**
+   * 前年の総合計。
+   *
+   * **無いことがある。** 町丁の一覧は年によって入れ替わり、片方の年にしか無い町丁が
+   * 100件以上ある。件数0の行も実在するので「載っていない＝0件」ではない。
+   * そのため未定義は「前年の記録が無い」であって「前年0件」ではなく、画面も増減を出さない。
+   *
+   * 罪種の内訳は持たない。増減で意味があるのは総数で、手口別は件数が小さすぎて読めない。
+   */
+  p?: number;
 };
 
 export type BouhanDataset = {
@@ -42,8 +52,16 @@ export type BouhanDataset = {
   dataUpdatedAt?: string;
   sourceName: string;
   sourceUrl: string;
-  /** 集計年（「令和6年」） */
+  /** 集計年（「令和7年」） */
   year: string;
+  /** 増減の比較に使った前年（「令和6年」） */
+  previousYear: string;
+  /**
+   * 区市町村ごとの前年の総件数。CSV自身の「○○計」行の値。
+   * 町丁は年で入れ替わるため、町丁を足し上げると比較する範囲がずれる。小計行なら年をまたいでも
+   * 同じ区市町村の全件を指しているので、区市町村単位の増減はこちらで出す
+   */
+  previousMunicipalityTotals: Record<string, number>;
   /** 列名（`市区町丁` を除く。先頭は `総合計`） */
   cols: string[];
   groups: CrimeGroup[];

@@ -9,6 +9,7 @@
 import Link from 'next/link';
 
 import { AnswerCard } from '@/components/AnswerCard';
+import { Pictogram } from '@/components/Pictogram';
 import { FacilityMap } from '@/components/FacilityMap';
 import {
   MANABI_KINDS,
@@ -91,8 +92,9 @@ export default async function ManabiPage({ searchParams }: PageProps<'/manabi'>)
             {MANABI_KINDS.map((kind) => (
               <label key={kind} className="flex items-center gap-2 text-sm">
                 <input type="checkbox" name="k" value={kind} defaultChecked={kinds.includes(kind)} />
-                <span>
-                  {manabiIcon(kind)} {kind}
+                <span className="flex items-center gap-1.5">
+                  <Pictogram name={manabiIcon(kind)} className="h-4 w-4 shrink-0 text-muted" />
+                  {kind}
                 </span>
               </label>
             ))}
@@ -147,8 +149,9 @@ export default async function ManabiPage({ searchParams }: PageProps<'/manabi'>)
             <ul className="mt-3 divide-y divide-line">
               {result.facilities.slice(0, LIST_LIMIT).map((facility) => (
                 <li key={`${facility.n}-${facility.a}`} className="py-3">
-                  <p className="text-xs text-muted">
-                    {manabiIcon(facility.k)} {facility.k} ・ {facility.m}
+                  <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                    <Pictogram name={manabiIcon(facility.k)} className="h-4 w-4 shrink-0" />
+                    {facility.k} ・ {facility.m}
                     {facility.outside && (
                       <span className="ml-2 rounded bg-warn-soft px-2 py-0.5 font-semibold text-warn">
                         都外（{facility.pref ?? '東京都外'}）

@@ -13,5 +13,24 @@ import type { GomiCategoryKey } from '@/lib/gomi/types';
 /** 簡易版4本そのものを指す図記号 */
 export type ToolIcon = 'gomi' | 'bouhan' | 'manabi' | 'barrierfree';
 
+/**
+ * 場所の種類を表す図記号。
+ * `/manabi` の施設区分9種と `/barrierfree` の場所の種類3種で使う。
+ * 区分名そのものを名前にはしない（元データの表記が変われば型が壊れるため）
+ */
+export type PlaceIcon =
+  | 'library'
+  | 'museum'
+  | 'gallery'
+  | 'community_hall'
+  | 'hall'
+  | 'youth'
+  | 'learning'
+  | 'equality'
+  | 'place'
+  | 'restaurant'
+  | 'station'
+  | 'public_facility';
+
 /** 図記号の名前。ごみの分別区分は正規化キーをそのまま図記号の名前として使う */
-export type GlyphName = ToolIcon | GomiCategoryKey;
+export type GlyphName = ToolIcon | GomiCategoryKey | PlaceIcon;

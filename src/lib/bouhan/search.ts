@@ -9,7 +9,8 @@
  * 「危ない街」と読ませる表示は絶対に作らない（設計書 §3.2）。
  * そのため:
  *   - 「危険度」「治安ランク」のような評価値は一切作らない
- *   - アイコンは警告色ではなく中立の📊にする
+ *   - 図記号は警告色の盾ではなく中立の棒グラフにする
+ *   - 前年比は**実数の差だけ**を出す。割合は出さない（1件→3件が「+200%」になる）
  *   - 内訳の上位手口を必ず併記する。丸の内の418件が万引き・置引き中心であることが見えれば、
  *     件数の多さが「住民が襲われる街」を意味しないことは数字自体が語る
  *   - 誤読を防ぐ注記を limitations に必ず入れる（共通画面契約により省略できない）
@@ -28,6 +29,31 @@ const TOTAL_INDEX = dataset.cols.indexOf('総合計');
 /** 画面の見出しで使う実数 */
 export const BOUHAN_AREA_COUNT = dataset.areas.length;
 export const BOUHAN_YEAR = dataset.year;
+export const BOUHAN_PREVIOUS_YEAR = dataset.previousYear;
+
+/**
+ * 前年との差を、住民が読める形の1行にする。
+ *
+ * **割合は出さない。** 町丁の件数は1桁のものが多く、1件から3件になっただけで「+200%」になる。
+ * 実数の差だけを出し、比較した相手の件数も併記して、読み手が自分で大きさを判断できるようにする。
+ */
+function yearOverYear(current: number, previous: number | undefined): { label: string; value: string } | null {
+  if (previous === undefined) return null;
+  const diff = current - previous;
+  const value =
+    diff === 0
+      ? `増減なし（${dataset.previousYear}も${previous.toLocaleString()}件）`
+      : `${diff > 0 ? '+' : '−'}${Math.abs(diff).toLocaleString()}件（${dataset.previousYear}は${previous.toLocaleString()}件）`;
+  return { label: `${dataset.previousYear}からの増減`, value };
+}
+
+/**
+ * 増減を見せるときに必ず添える注記。
+ * 増減は「治安が良くなった/悪くなった」と最も読まれやすい数字なので、
+ * 件数そのものへの注記（BASE_LIMITATIONS）とは別に用意する。
+ */
+const CHANGE_LIMITATION =
+  '認知件数の増減は、実際の被害の増減だけで決まるものではありません。届出のしやすさや取締りの重点の置き方でも動きます。増減の向きだけで街の変化を判断することはできません。';
 
 export type BouhanQuery = {
   /** 町丁名または区市町村名。「丸の内１丁目」「立川市」など */
@@ -97,6 +123,8 @@ function searchMunicipality(municipality: string): BouhanSearchResult {
   };
   const total = summed.v[TOTAL_INDEX];
   const { groups, topMethods } = toBreakdowns(summed);
+  // 区市町村の前年はCSVの小計行から取る。町丁の足し上げだと年で範囲がずれる
+  const change = yearOverYear(total, dataset.previousMunicipalityTotals[municipality]);
 
   return {
     answer: {
@@ -108,6 +136,7 @@ function searchMunicipality(municipality: string): BouhanSearchResult {
           ? `件数の内訳で多いのは ${topMethods.map((m) => `${m.label} ${m.count}件`).join('、')} です。`
           : undefined,
       facts: [
+        ...(change ? [change] : []),
         ...groups.map((g) => ({ label: g.label, value: `${g.count.toLocaleString()}件` })),
         { label: '収録している町丁数', value: `${areas.length}町丁` },
       ],
@@ -116,7 +145,9 @@ function searchMunicipality(municipality: string): BouhanSearchResult {
     limitations: [
       ...BASE_LIMITATIONS,
       '区市町村どうしの件数を直接比べても意味がありません。人口も面積も昼間人口も違うためです。',
-      `${dataset.year}の1年分の累計です。前年からの増減は分かりません。`,
+      ...(change
+        ? [CHANGE_LIMITATION]
+        : [`${dataset.previousYear}の記録が無いため、増減はお伝えできません。`]),
     ],
     escalations: [
       {
@@ -182,7 +213,10 @@ export function searchBouhan(query: BouhanQuery): BouhanSearchResult {
   const { groups, topMethods } = toBreakdowns(best);
   const position = positionInMunicipality(best);
 
+  const change = yearOverYear(total, best.p);
+
   const facts = [
+    ...(change ? [change] : []),
     ...groups.map((g) => ({ label: g.label, value: `${g.count.toLocaleString()}件` })),
     {
       label: `${best.m}内での件数`,
@@ -205,7 +239,12 @@ export function searchBouhan(query: BouhanQuery): BouhanSearchResult {
     provenance: provenance(),
     limitations: [
       ...BASE_LIMITATIONS,
-      `${dataset.year}の1年分の累計です。前年からの増減や、時間帯・曜日ごとの傾向は分かりません。`,
+      ...(change
+        ? [CHANGE_LIMITATION]
+        : [
+            `この町丁は${dataset.previousYear}のデータに同じ名前の行が無いため、増減はお伝えできません。町丁名が変わったか、その年は記録が無かったかのどちらかです。`,
+          ]),
+      `${dataset.year}の1年分の累計です。時間帯・曜日ごとの傾向は分かりません。`,
       '町丁より細かい場所（どの通りか）や、事件の内容までは分かりません。',
     ],
     escalations: [

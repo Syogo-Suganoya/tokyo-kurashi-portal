@@ -6,6 +6,8 @@
  * 施設種別ごとにサイトが分かれている現状に対する差分がここにある。
  */
 
+import type { PlaceIcon } from '@/types/glyph';
+
 import type { SourceStamp } from '../source-stamp';
 
 export type ManabiFacility = {
@@ -48,19 +50,22 @@ export type ManabiDataset = {
   facilities: ManabiFacility[];
 };
 
-/** 施設区分ごとのアイコン。区分名は元データの表記をそのまま使う */
-export const MANABI_ICON: Record<string, string> = {
-  図書館: '📚',
-  博物館: '🏛️',
-  博物館類似施設: '🖼️',
-  公民館: '🏫',
-  社会教育会館: '🏢',
-  青少年施設: '🧒',
-  生涯学習センター: '✏️',
-  '女性/男女平等推進施設': '⚖️',
-  その他の施設: '📍',
+/**
+ * 施設区分ごとの図記号。区分名（キー）は元データの表記をそのまま使う。
+ * 元データに未知の区分が現れても落ちないよう、既定の目印を持つ
+ */
+export const MANABI_ICON: Record<string, PlaceIcon> = {
+  図書館: 'library',
+  博物館: 'museum',
+  博物館類似施設: 'gallery',
+  公民館: 'community_hall',
+  社会教育会館: 'hall',
+  青少年施設: 'youth',
+  生涯学習センター: 'learning',
+  '女性/男女平等推進施設': 'equality',
+  その他の施設: 'place',
 };
 
-export function manabiIcon(kind: string): string {
-  return MANABI_ICON[kind] ?? '📍';
+export function manabiIcon(kind: string): PlaceIcon {
+  return MANABI_ICON[kind] ?? 'place';
 }

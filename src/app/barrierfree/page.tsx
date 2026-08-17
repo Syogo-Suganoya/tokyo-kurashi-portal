@@ -13,6 +13,7 @@ import Link from 'next/link';
 
 import { AnswerCard } from '@/components/AnswerCard';
 import { BarrierFreeMap } from '@/components/BarrierFreeMap';
+import { Pictogram } from '@/components/Pictogram';
 import { MANABI_MUNICIPALITIES } from '@/lib/manabi/search';
 import { BARRIERFREE_ORGS, searchBarrierFree } from '@/lib/barrierfree/search';
 import {
@@ -188,8 +189,9 @@ export default async function BarrierFreePage({ searchParams }: PageProps<'/barr
 function SpotRow({ spot }: { spot: BarrierFreeSpot }) {
   return (
     <li className="py-4">
-      <p className="text-xs text-muted">
-        {SPOT_ICON[spot.c]} {SPOT_LABEL[spot.c]}
+      <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
+        <Pictogram name={SPOT_ICON[spot.c]} className="h-4 w-4 shrink-0" />
+        {SPOT_LABEL[spot.c]}
         {spot.sub && ` ・ ${spot.sub}`}
         <span className="ml-2 rounded bg-background px-2 py-0.5">出典: 東京都{spot.org}</span>
       </p>

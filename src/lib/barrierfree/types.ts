@@ -25,6 +25,8 @@
  * 取り込み側で吸収し、画面はこの3値だけを見る。
  */
 
+import type { PlaceIcon } from '@/types/glyph';
+
 import type { SourceStamp } from '../source-stamp';
 
 export type FeatureState = 'yes' | 'no' | 'unknown';
@@ -63,10 +65,10 @@ export const SPOT_LABEL: Record<SpotCategory, string> = {
   facility: '公共施設',
 };
 
-export const SPOT_ICON: Record<SpotCategory, string> = {
-  restaurant: '🍽️',
-  station: '🚉',
-  facility: '🏢',
+export const SPOT_ICON: Record<SpotCategory, PlaceIcon> = {
+  restaurant: 'restaurant',
+  station: 'station',
+  facility: 'public_facility',
 };
 
 export type BarrierFreeSpot = {

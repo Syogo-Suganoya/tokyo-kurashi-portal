@@ -39,7 +39,7 @@ export default async function BouhanPage({ searchParams }: PageProps<'/bouhan'>)
       <h1 className="signboard mt-2 text-3xl">町丁ごとの犯罪認知件数を調べる</h1>
       <p className="mt-3 max-w-3xl leading-relaxed text-muted">
         警視庁が公開している町丁別の認知件数を、そのまま数字でお見せします。
-        2つ入力すると並べて比べられます。
+        2つ入力すると並べて比べられます。前年からの増減も併せて出します。
         <strong className="text-foreground">
           件数の多さは、その町丁が危険であることを意味しません
         </strong>
