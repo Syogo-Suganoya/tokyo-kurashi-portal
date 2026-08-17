@@ -24,6 +24,24 @@ import { normalizeSearchKey } from '../text';
 import type { BouhanDataset, BouhanArea } from './types';
 
 const dataset = datasetJson as BouhanDataset;
+
+/*
+ * 取り込み済みJSONが型どおりの形かを、読み込んだ時点で確かめる。
+ *
+ * `as BouhanDataset` は嘘をつける。取り込み側に項目を足したのに再生成を忘れると、
+ * 型は通るのに実行時だけ undefined になり、**画面を開いたときに初めて500で落ちる**。
+ * 実際にそれをやった（`previousMunicipalityTotals` を足して再生成し忘れ、
+ * 区市町村名で引いたときだけ500になっていた）。
+ * ここで落としておけば、原因と対処がそのまま出る。
+ */
+for (const key of ['cols', 'groups', 'areas', 'previousMunicipalityTotals'] as const) {
+  if (dataset[key] === undefined) {
+    throw new Error(
+      `取り込み済みデータに ${key} がありません。npm run build:bouhan を実行してください`,
+    );
+  }
+}
+
 const TOTAL_INDEX = dataset.cols.indexOf('総合計');
 
 /** 画面の見出しで使う実数 */

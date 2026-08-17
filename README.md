@@ -47,7 +47,10 @@ Cloudflare Workers 1つで動く。**APIキーも外部DBも持たない。**
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 開発の手順と約束。セットアップ・データの取り込み・図記号の足し方 |
 | [docs/DEPLOY.md](docs/DEPLOY.md) | 公開の手順（Cloudflare Workers） |
 | [TODO.md](TODO.md) | 残っている作業 |
-| [提出フォーム原稿](docs/22_teishutsu_form_draft.md) | 応募内容の下書き |
+| [提出フォーム下書き](docs/提出フォーム下書き.md) | 応募内容の下書き |
+| [プレゼン原稿](docs/プレゼン原稿.md) | First Stage 2分間プレゼンの読み上げ原稿と配色 |
+| [デモ用入力値](docs/デモ用入力値.md) | 確実にヒットする入力と、外れる条件（実測） |
+| [docs/architecture.py](docs/architecture.py) | 構成図の生成スクリプト |
 
 ## 出典
 
