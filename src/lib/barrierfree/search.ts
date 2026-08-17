@@ -135,7 +135,7 @@ export function searchBarrierFree(query: BarrierFreeQuery): BarrierFreeSearchRes
     answer: {
       subject: conditions || '都内すべて',
       headline: `${spots.length.toLocaleString()}か所が見つかりました`,
-      icon: '♿',
+      icon: 'barrierfree',
       note: `内訳は ${[...byCategory.entries()].map(([c, n]) => `${SPOT_LABEL[c]} ${n.toLocaleString()}件`).join('、')} です。`,
       facts: dataset.byOrg.map((o) => ({
         label: `${o.org}のデータ`,

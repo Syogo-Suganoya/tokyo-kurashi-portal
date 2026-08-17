@@ -6,6 +6,7 @@
  * ②〜④を描かない分岐はここに作らないこと。作った時点で共通契約が意味を失う。
  */
 
+import { Pictogram } from '@/components/Pictogram';
 import { getLink } from '@/data/links';
 import {
   ESCALATION_LABEL,
@@ -41,7 +42,7 @@ export function AnswerCard({ result }: { result: AnswerResult }) {
         <div className="border-b border-line p-6">
           <p className="text-sm text-muted">{result.answer.subject}</p>
           <p className="mt-2 flex items-center gap-3 text-3xl font-bold">
-            <span aria-hidden>{result.answer.icon}</span>
+            <Pictogram name={result.answer.icon} className="h-9 w-9 shrink-0 text-accent" />
             <span>{result.answer.headline}</span>
           </p>
           {result.answer.facts.length > 0 && (

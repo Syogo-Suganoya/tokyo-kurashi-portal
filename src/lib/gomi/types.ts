@@ -32,18 +32,10 @@ export type GomiCategoryKey =
   | 'not_collected'
   | 'other';
 
-export const GOMI_CATEGORY_ICON: Record<GomiCategoryKey, string> = {
-  burnable: '🔥',
-  non_burnable: '🧱',
-  recyclable: '♻️',
-  oversized: '🛋️',
-  hazardous: '⚠️',
-  drop_off: '📦',
-  not_collected: '🚫',
-  other: '❓',
-};
-
-/** 正規化キーの説明。アイコンだけでは伝わらないので画面の補助に使う */
+/**
+ * 正規化キーの説明。
+ * 図記号だけでは伝わらないので、図記号の隣には必ずこの言葉か公式表記を置く
+ */
 export const GOMI_CATEGORY_HINT: Record<GomiCategoryKey, string> = {
   burnable: '燃やすごみの区分です',
   non_burnable: '燃やさないごみの区分です',

@@ -9,6 +9,7 @@
 import Link from 'next/link';
 
 import { AnswerCard } from '@/components/AnswerCard';
+import { Pictogram } from '@/components/Pictogram';
 import { SavedMunicipalityLinks } from '@/components/SavedMunicipalityLinks';
 import { MUNICIPALITIES } from '@/data/municipalities';
 import { searchGomi } from '@/lib/gomi/search';
@@ -113,7 +114,7 @@ export default async function GomiPage({ searchParams }: PageProps<'/gomi'>) {
               <ul className="mt-3 space-y-2 text-sm">
                 {result.alternatives.map((alternative) => (
                   <li key={alternative.name} className="flex items-baseline gap-2">
-                    <span aria-hidden>{alternative.icon}</span>
+                    <Pictogram name={alternative.icon} className="h-5 w-5 shrink-0 text-accent" />
                     <span className="font-medium">{alternative.name}</span>
                     <span className="text-muted">{alternative.category}</span>
                   </li>

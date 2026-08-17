@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <title>くらしの道しるべ</title>
+  <rect width="1200" height="630" fill="#17408b"/>
+
+  <!-- 道しるべの標。サイト全体の印と同じ形 -->
+  <g transform="translate(92 96) scale(1.55)">
+    <path d="M45 8v128" stroke="#ffffff" stroke-width="9" stroke-linecap="round"/>
+    <path d="M8 16h55l22 18-22 18H8z" fill="#ffffff"/>
+    <path d="M82 78H27L5 96l22 18h55z" fill="#ffffff"/>
+  </g>
+
+  <g font-family="Hiragino Sans, Hiragino Kaku Gothic ProN, Noto Sans JP, sans-serif" fill="#ffffff">
+    <text x="330" y="196" font-size="42" font-weight="600" opacity="0.82" letter-spacing="6">東京都のオープンデータで答える</text>
+    <text x="330" y="310" font-size="92" font-weight="bold" letter-spacing="2">くらしの道しるべ</text>
+    <text x="330" y="392" font-size="38" font-weight="500" opacity="0.9">ごみの分別も、引っ越し先の治安も、</text>
+    <text x="330" y="446" font-size="38" font-weight="500" opacity="0.9">車椅子で入れるお店も。</text>
+  </g>
+
+  <!-- 分野の色帯。4本の簡易版を色で見分けるという設計言語をそのまま出す -->
+  <g transform="translate(92 520)">
+    <rect x="0" y="0" width="252" height="12" rx="6" fill="#1f6b45"/>
+    <rect x="266" y="0" width="252" height="12" rx="6" fill="#8fb0e8"/>
+    <rect x="532" y="0" width="252" height="12" rx="6" fill="#d59a63"/>
+    <rect x="798" y="0" width="252" height="12" rx="6" fill="#b39ae0"/>
+    <g font-family="Hiragino Sans, Hiragino Kaku Gothic ProN, Noto Sans JP, sans-serif" fill="#ffffff" font-size="27" font-weight="600" opacity="0.9">
+      <text x="0" y="56">ごみの分別</text>
+      <text x="266" y="56">犯罪の認知件数</text>
+      <text x="532" y="56">学びと体験の場</text>
+      <text x="798" y="56">車椅子で行ける場所</text>
+    </g>
+  </g>
+</svg>

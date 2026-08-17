@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <title>くらしの道しるべ</title>
+  <!-- iOS 側で角丸に切り抜かれるので、こちらでは角を落とさない -->
+  <rect width="180" height="180" fill="#17408b"/>
+  <path d="M90 34v116" stroke="#ffffff" stroke-width="13" stroke-linecap="round"/>
+  <path d="M56 44h64l24 21-24 21H56z" fill="#ffffff"/>
+  <path d="M124 100H60l-24 21 24 21h64z" fill="#ffffff"/>
+</svg>

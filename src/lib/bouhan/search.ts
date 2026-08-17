@@ -102,7 +102,7 @@ function searchMunicipality(municipality: string): BouhanSearchResult {
     answer: {
       subject: `${municipality}全体（${dataset.year}）`,
       headline: `刑法犯の認知件数 ${total.toLocaleString()}件`,
-      icon: '📊',
+      icon: 'bouhan',
       note:
         topMethods.length > 0
           ? `件数の内訳で多いのは ${topMethods.map((m) => `${m.label} ${m.count}件`).join('、')} です。`
@@ -195,7 +195,7 @@ export function searchBouhan(query: BouhanQuery): BouhanSearchResult {
       subject: `${best.m}${best.t}（${dataset.year}）`,
       headline: `刑法犯の認知件数 ${total.toLocaleString()}件`,
       // 警告のアイコンは使わない。これは治安の評価ではなく件数の表示
-      icon: '📊',
+      icon: 'bouhan',
       note:
         topMethods.length > 0
           ? `件数の内訳で多いのは ${topMethods.map((m) => `${m.label} ${m.count}件`).join('、')} です。何がこの件数を作っているかを見てください。`

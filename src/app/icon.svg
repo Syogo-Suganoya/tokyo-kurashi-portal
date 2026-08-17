@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>くらしの道しるべ</title>
+  <rect width="32" height="32" rx="6" fill="#17408b"/>
+  <path d="M16 5.5v22" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/>
+  <path d="M9.5 7h11.5l4.5 4-4.5 4H9.5z" fill="#ffffff"/>
+  <path d="M22.5 17H11l-4.5 4 4.5 4h11.5z" fill="#ffffff"/>
+</svg>

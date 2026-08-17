@@ -118,7 +118,7 @@ export function searchManabi(query: ManabiQuery): ManabiSearchResult {
     answer: {
       subject: conditions || '都内全域・全種別',
       headline: `${facilities.length.toLocaleString()}件の施設が見つかりました`,
-      icon: '🗺️',
+      icon: 'manabi',
       note:
         byKind.size > 1
           ? `内訳は ${[...byKind.entries()].map(([k, n]) => `${k} ${n}件`).join('、')} です。`

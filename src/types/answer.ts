@@ -14,6 +14,7 @@
  */
 
 import type { LinkId } from '@/data/links';
+import type { GlyphName } from '@/types/glyph';
 
 /** 少なくとも1要素を要求する配列。空配列を型で禁止するために使う */
 export type NonEmpty<T> = readonly [T, ...T[]];
@@ -93,8 +94,11 @@ export type AnswerBody = {
    * 勝手に「不燃ごみ」等へ正規化すると、実際のごみ袋やカレンダーの表記と食い違う（設計書 §2.2③）
    */
   headline: string;
-  /** アイコン表示・横断検索のための内部キー。住民への表示には使わない */
-  icon: string;
+  /**
+   * 図記号の名前。文字列ではなく名前の union なので、存在しない図記号は型で弾かれる。
+   * 図記号は補助であって、これだけで意味が通ることは期待しない（読み上げからは外す）
+   */
+  icon: GlyphName;
   /** 注意点など、公式データに含まれる補足文 */
   note?: string;
   /** 料金など、付随する事実 */

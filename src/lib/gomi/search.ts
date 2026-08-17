@@ -20,7 +20,7 @@ import {
 import type { AnswerResult, Escalation, Provenance, VerifiedLink } from '@/types/answer';
 
 import { normalizeSearchKey } from './normalize';
-import { GOMI_CATEGORY_ICON, type GomiDataset, type GomiItem, type GomiMunicipality } from './types';
+import type { GomiCategoryKey, GomiDataset, GomiItem, GomiMunicipality } from './types';
 
 const dataset = datasetJson as GomiDataset;
 const SUPPORTED_COUNT = dataset.municipalities.length;
@@ -36,7 +36,7 @@ export type GomiQuery = {
   municipality: string;
 };
 
-export type GomiAlternative = { name: string; category: string; icon: string };
+export type GomiAlternative = { name: string; category: string; icon: GomiCategoryKey };
 
 export type GomiSearchResult = AnswerResult & {
   /** 同じ検索語に当たった他の品目。「アイロン」で引くと「アイロン台」も見せる */
@@ -126,7 +126,7 @@ export function searchGomi(query: GomiQuery): GomiSearchResult {
   const alternatives: GomiAlternative[] = hits.slice(1, 6).map((hit) => ({
     name: hit.item.n,
     category: hit.item.c,
-    icon: GOMI_CATEGORY_ICON[hit.item.k],
+    icon: hit.item.k,
   }));
 
   // --- ③ できないこと ---
@@ -158,7 +158,7 @@ export function searchGomi(query: GomiQuery): GomiSearchResult {
       // 自治体の公式表記をそのまま出す。勝手に「可燃ごみ」等へ揃えると
       // 実際のごみ袋やカレンダーの表記と食い違い、住民を混乱させる（設計書 §2.2③）
       headline: best.c,
-      icon: GOMI_CATEGORY_ICON[best.k],
+      icon: best.k,
       note: best.note,
       facts: best.fee ? [{ label: '粗大ごみ回収料金', value: `${best.fee}円` }] : [],
     },

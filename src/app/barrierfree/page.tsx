@@ -4,14 +4,15 @@
  * 交通局・産業労働局・福祉局が別々に公開しているデータを、
  * 住民の関心事である「車椅子で行ける場所か」の1軸に束ねる。
  *
- * 形式は地図ではなく**条件で絞れるリスト＋詳細カード**にしている（設計書 §3.4）。
- * 地図は `/manabi` が担当しており、画面の形式を分けることで実装も分散させている。
- * 条件で絞ることこそがこの画面の価値なので、リストの方が目的にも合う。
+ * 主役は**条件で絞れるリスト＋詳細カード**（設計書 §3.4）。条件で絞れることがこの画面の
+ * 価値であり、「どの設備があると書かれているか」は地図の点では表せないため。
+ * 地図はその後に足す。絞った結果がどこに集まっているかは、リストでは読み取れない。
  */
 
 import Link from 'next/link';
 
 import { AnswerCard } from '@/components/AnswerCard';
+import { BarrierFreeMap } from '@/components/BarrierFreeMap';
 import { MANABI_MUNICIPALITIES } from '@/lib/manabi/search';
 import { BARRIERFREE_ORGS, searchBarrierFree } from '@/lib/barrierfree/search';
 import {
@@ -157,6 +158,15 @@ export default async function BarrierFreePage({ searchParams }: PageProps<'/barr
       <div className="mt-8">
         <AnswerCard result={result} />
       </div>
+
+      {result.spots.length > 0 && (
+        <section className="mt-6">
+          <h2 className="eyebrow text-muted">地図で見る</h2>
+          <div className="mt-3">
+            <BarrierFreeMap spots={result.spots} />
+          </div>
+        </section>
+      )}
 
       {result.spots.length > 0 && (
         <section className="mt-6 rounded-xl border border-line bg-surface p-5">
