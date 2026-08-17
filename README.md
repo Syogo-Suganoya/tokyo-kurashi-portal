@@ -50,7 +50,7 @@ Cloudflare Workers 1つで動く。**APIキーも外部DBも持たない。**
 | [提出フォーム下書き](docs/提出フォーム下書き.md) | 応募内容の下書き |
 | [プレゼン原稿](docs/プレゼン原稿.md) | First Stage 2分間プレゼンの読み上げ原稿と配色 |
 | [デモ用入力値](docs/デモ用入力値.md) | 確実にヒットする入力と、外れる条件（実測） |
-| [docs/architecture.py](docs/architecture.py) | 構成図の生成スクリプト |
+| [構成図](docs/architecture.png) | 技術スタック（生成元は [architecture.py](docs/architecture.py)） |
 
 ## 出典
 

@@ -8,13 +8,15 @@
 AIも同じ Cloudflare 上の Workers AI をバインディングで呼ぶので、APIキーが存在しない。
 
 実行:
-    /Library/Developer/CommandLineTools/usr/bin/python3 docs/architecture.py
+    brew install graphviz                 # dot コマンド（初回のみ）
+    python3 -m venv .venv-diagrams        # 初回のみ
+    .venv-diagrams/bin/pip install diagrams
+    .venv-diagrams/bin/python docs/architecture.py
 
-出力: docs/architecture.png（依存: diagrams, graphviz）
+出力: docs/architecture.png（生成物だが、プレゼンで使うのでコミットする）
 """
 
 from diagrams import Cluster, Diagram, Edge
-from diagrams.custom import Custom  # noqa: F401  (将来ロゴを差すとき用)
 from diagrams.generic.storage import Storage
 from diagrams.onprem.client import Users
 from diagrams.onprem.network import Internet
