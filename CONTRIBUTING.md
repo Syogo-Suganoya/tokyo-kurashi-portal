@@ -54,6 +54,7 @@ scripts/                取り込みスクリプトと検証
 assets/                 OGP画像・アイコンのSVG原本
 docs/                   設計書・提出フォーム原稿・デプロイ手順
 wrangler.jsonc          Worker名・AIバインディング・使うモデル
+.github/workflows/      main への push で Cloudflare へデプロイする CD
 open-next.config.ts     Next.js を Workers に載せるための設定
 cloudflare-env.d.ts     **生成物**。`npm run cf-typegen` で作り直してコミットする
 ```

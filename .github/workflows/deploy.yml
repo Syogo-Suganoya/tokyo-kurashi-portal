@@ -1,0 +1,96 @@
+# くらしの道しるべ — Cloudflare Workers への CD
+#
+# main への push で本番デプロイ。PR ではビルドまで（デプロイしない）。
+# 必要な GitHub Secrets は docs/DEPLOY.md「手順3」を参照。
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# 同じブランチのデプロイが走っている間は後発を待たせる。
+# main のデプロイは途中で打ち切らない（Worker が中途半端な状態にならないようにする）。
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Cloudflare アカウントID。秘匿情報ではないのでワークフローに直書きする。
+  # ダッシュボード右下、または `npx wrangler whoami` で確認できる。
+  CLOUDFLARE_ACCOUNT_ID: REPLACE_WITH_ACCOUNT_ID
+
+jobs:
+  build:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # アプリ（Cloudflare Workers）と取り込みスクリプト（Node）で
+      # tsconfig が分かれている。両方を通す
+      - name: Typecheck
+        run: npm run check:types
+
+      # opennextjs-cloudflare build は内部で npm run build を呼ぶので、
+      # prebuild（MapLibre ワーカーの配置）もここで走る
+      - name: Build (OpenNext)
+        run: npx opennextjs-cloudflare build
+
+      # 地図のワーカーが成果物に入っていないと、タイルは出るのに点だけが
+      # 永久に描かれない。画面は一見動くので、人が見て気づけない。ここで止める
+      - name: Check map worker is bundled
+        run: |
+          if [ ! -f .open-next/assets/maplibre/maplibre-gl-worker.mjs ]; then
+            echo "::error::MapLibre のワーカーが .open-next/assets/maplibre/ にありません。prebuild（scripts/copy-map-worker.mjs）が走っているか確認してください（docs/DEPLOY.md）。"
+            exit 1
+          fi
+
+  deploy:
+    name: Deploy
+    needs: build
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build (OpenNext)
+        run: npx opennextjs-cloudflare build
+
+      # アカウントIDを書き換え忘れたまま上げるのを防ぐ
+      - name: Check account id
+        run: |
+          if [ "${CLOUDFLARE_ACCOUNT_ID}" = "REPLACE_WITH_ACCOUNT_ID" ]; then
+            echo "::error::.github/workflows/deploy.yml の CLOUDFLARE_ACCOUNT_ID がプレースホルダのままです（docs/DEPLOY.md 手順3）。"
+            exit 1
+          fi
+
+      # AI は wrangler.jsonc の AI バインディング経由で呼ぶ。
+      # 渡す秘密の値はこのトークン1つだけ（アプリにAPIキーは無い）
+      - name: Deploy
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ env.CLOUDFLARE_ACCOUNT_ID }}

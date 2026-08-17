@@ -13,8 +13,10 @@
 
 手順は [docs/DEPLOY.md](docs/DEPLOY.md) にまとめてある。
 
-- [ ] ハッカソン運営から付与された Cloudflare アカウント（有料プラン）でログインする
-- [ ] `npx wrangler login` して `npm run deploy`
+- [ ] ハッカソン運営から付与された Cloudflare アカウント（有料プラン）で `npx wrangler login`
+- [ ] `.github/workflows/deploy.yml` の `CLOUDFLARE_ACCOUNT_ID` を実際のIDに書き換える
+- [ ] Cloudflare APIトークン（Workers Scripts: Edit）を作り、GitHub の `CLOUDFLARE_API_TOKEN` に登録する
+- [ ] `main` に push して CD を走らせる（手元から出すなら `npm run deploy`）
 - [ ] 公開URLで4画面（`/gomi` `/bouhan` `/manabi` `/barrierfree`）とチャットが動くことを確認する
 - [ ] `/manabi` の地図がデプロイ先でも出ることを確認する（ワーカーは `prebuild` で `public/` へ配置される）
 - [ ] [docs/DEPLOY.md](docs/DEPLOY.md) §4 の確認表を全部通す
