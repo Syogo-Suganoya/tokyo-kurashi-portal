@@ -8,7 +8,7 @@
  */
 
 import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { AnswerCard } from '@/components/AnswerCard';
 import { MUNICIPALITIES } from '@/data/municipalities';
@@ -24,13 +24,15 @@ const EXAMPLES = [
 
 type Turn = { question: string; response: ChatResponse };
 
-export function Chat() {
+export function Chat({ initialQuestion = '' }: { initialQuestion?: string }) {
   const [input, setInput] = useState('');
   const [turns, setTurns] = useState<Turn[]>([]);
   const [pending, setPending] = useState(false);
   // 一度答えてもらった自治体はセッション中は保持し、以降は聞き返さない（設計書 §4.3）
   const [municipality, setMunicipality] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  /** トップから渡された質問を一度だけ送る。開発時の再マウントで二重送信しないよう見張る */
+  const sentInitial = useRef(false);
 
   async function ask(question: string, withMunicipality = municipality) {
     if (!question.trim() || pending) return;
@@ -54,6 +56,15 @@ export function Chat() {
       inputRef.current?.focus();
     }
   }
+
+  // トップページのフォームから来たときは、その質問をそのまま投げる
+  useEffect(() => {
+    if (!initialQuestion || sentInitial.current) return;
+    sentInitial.current = true;
+    void ask(initialQuestion);
+    // ask は毎レンダリング作り直されるので依存に入れない。初回だけ動かすのが目的
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuestion]);
 
   /**
    * 聞き返しに答えたら、その自治体を覚えて**元の質問文のまま**やり直す。

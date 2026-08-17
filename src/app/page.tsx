@@ -1,36 +1,34 @@
 /**
- * トップページ
+ * トップページ（ランディング）
  *
- * 主張を先に置く構成にしている。
- * 「AIは答えを書かない」というのがこのサービスの設計そのものであり、
- * 検索して要約させる作りのAIチャットとの違いもそこにしか無いため、
- * それを見出しと図版で最初に出し、あとから実物（チャットと簡易版4本）に案内する。
+ * ここは「何ができるか」を伝える場所。実際に聞くのは `/chat`。
+ * トップにも入力欄は置くが、送信するとチャット画面へ移る。
  *
- * 作らないと決めたテーマ（設計書 §2 のTier分類）と、送り先の一覧も画面に出す。
- * 何を持っていないかを見せることまで含めて、このサービスの説明になる。
+ * 読み手はハッカソンの審査員ではなく、困りごとを抱えた住民として書く。
+ * 「テーマ」「Tier」のような作り手の言葉は出さず、困りごとの言葉で並べる。
  */
 
 import Link from 'next/link';
 
-import { Chat } from '@/components/Chat';
 import { Pictogram, type ToolIcon } from '@/components/Pictogram';
 import { AnswerPath, Contrast } from '@/components/Signpost';
-import { CURATED_LINKS, getLink } from '@/data/links';
-import { TOPIC_LINKS, type KnownTopic } from '@/lib/ai/tools';
+import { CURATED_LINKS, getLink, type LinkId } from '@/data/links';
 import { BARRIERFREE_ORGS, BARRIERFREE_TOTAL } from '@/lib/barrierfree/search';
 import { BOUHAN_AREA_COUNT, BOUHAN_YEAR } from '@/lib/bouhan/search';
 import { GOMI_ITEM_COUNT, GOMI_MUNICIPALITY_COUNT } from '@/lib/gomi/search';
 import { MANABI_FACILITY_COUNT } from '@/lib/manabi/search';
 
+type ToolHref = '/gomi' | '/bouhan' | '/manabi' | '/barrierfree';
+
 type Tool = {
-  href: '/gomi' | '/bouhan' | '/manabi' | '/barrierfree';
+  href: ToolHref;
   icon: ToolIcon;
   color: string;
   title: string;
   figure: string;
   unit: string;
   body: string;
-  /** その簡易版が既存サービスに対して何を足しているか */
+  /** その画面が既存のサービスに対して何を足しているか */
   edge: string;
 };
 
@@ -42,8 +40,8 @@ const TOOLS: Tool[] = [
     title: 'ごみの分別',
     figure: GOMI_ITEM_COUNT.toLocaleString(),
     unit: `品目 / ${GOMI_MUNICIPALITY_COUNT}自治体`,
-    body: '品目名を入れると、その自治体の公式表記のまま分別区分・注意点・粗大ごみ料金が出ます。',
-    edge: `区市町村ごとに別サイトの公式チャットボットを、${GOMI_MUNICIPALITY_COUNT}自治体ぶん同じ画面で引けます。`,
+    body: '品目名を入れると、お住まいの自治体の表記のまま、分別区分・注意点・粗大ごみの料金が出ます。',
+    edge: `区市町村ごとに別サイトになっている分別の案内を、${GOMI_MUNICIPALITY_COUNT}自治体ぶん同じ画面で引けます。`,
   },
   {
     href: '/bouhan',
@@ -52,8 +50,8 @@ const TOOLS: Tool[] = [
     title: '町丁ごとの犯罪認知件数',
     figure: BOUHAN_AREA_COUNT.toLocaleString(),
     unit: `町丁 / ${BOUHAN_YEAR}`,
-    body: '2つ入力すると並べて比べられます。何の手口でその件数になっているかを必ず併せて出します。',
-    edge: '地図中心の既存マップではしにくい、引っ越し先候補の数値比較に振り切っています。',
+    body: '2つ入力すると並べて比べられます。何の手口でその件数になっているかも併せて出します。',
+    edge: '地図で見る既存のサービスではしにくい、引っ越し先候補どうしの数字の比較ができます。',
   },
   {
     href: '/manabi',
@@ -62,8 +60,8 @@ const TOOLS: Tool[] = [
     title: '学びと体験の場',
     figure: MANABI_FACILITY_COUNT.toLocaleString(),
     unit: '施設 / 9種別',
-    body: '図書館・博物館・公民館・青少年施設などを1つの地図に統合しました。',
-    edge: '種別ごとにサイトが分かれている現状を、種別をまたいで一望できます。',
+    body: '図書館・博物館・公民館・青少年施設などを1つの地図にまとめました。',
+    edge: '施設の種類ごとにサイトが分かれている現状に対して、種類をまたいで一望できます。',
   },
   {
     href: '/barrierfree',
@@ -71,73 +69,70 @@ const TOOLS: Tool[] = [
     color: 'var(--route-barrierfree)',
     title: '車椅子で行ける場所',
     figure: BARRIERFREE_TOTAL.toLocaleString(),
-    unit: `か所 / ${BARRIERFREE_ORGS.length}局`,
+    unit: `か所 / ${BARRIERFREE_ORGS.length}部署`,
     body: '飲食店・鉄道駅・公共施設を、必要な設備の条件で絞り込めます。',
-    edge: '3つの局が別々に公開しているデータを、行けるかどうかの1軸に束ねています。',
+    edge: '3つの部署が別々に公開しているデータを、行けるかどうかの1つの軸にまとめています。',
   },
 ];
 
 /**
- * 設計書 §10 の12テーマ。**どのテーマにも受け皿があることを画面で示す。**
- * 自前で答えるものは `tools`、既存へ送るものは `topic`（キュレーションDBのIDはそこから引く）。
- * 受け皿の無いテーマを作らないことが、このサービスの約束そのものなので一覧で見せる。
+ * 「こんなことが聞けます」の例。
+ *
+ * 分野の分類ではなく**住民が実際に口にする言葉**で並べる。
+ * その場で答えるものと、公式のサービスへご案内するものを混ぜて並べ、
+ * どちらであっても行き先があることを見せる。
  */
-type Theme = {
-  no: number;
-  name: string;
-  tier: 'A' | 'B' | 'C' | 'D';
-  /** 自前で答える簡易版 */
-  tools?: { label: string; href: Tool['href'] }[];
-  /** 既存サービスへ送る場合の分野キー */
-  topic?: KnownTopic;
-};
+type Example =
+  | { ask: string; answer: 'self'; href: ToolHref; label: string }
+  | { ask: string; answer: 'guide'; linkId: LinkId };
 
-const THEMES: Theme[] = [
-  { no: 1, name: '防災', tier: 'C', topic: 'bousai' },
-  { no: 2, name: '防犯', tier: 'A', tools: [{ label: '認知件数', href: '/bouhan' }], topic: 'bouhan' },
-  { no: 3, name: '健康・医療', tier: 'C', topic: 'kenko' },
-  { no: 4, name: '環境（ごみ）', tier: 'B', tools: [{ label: 'ごみの分別', href: '/gomi' }] },
-  { no: 5, name: '気候変動', tier: 'D', topic: 'kikou' },
-  { no: 6, name: '生活（税金・支援）', tier: 'D', topic: 'zeikin' },
-  { no: 7, name: '社会参加', tier: 'D', topic: 'shakai' },
+const EXAMPLES: Example[] = [
+  { ask: 'これ、燃えるごみ？', answer: 'self', href: '/gomi', label: 'ごみの分別' },
+  { ask: '粗大ごみっていくらかかるの？', answer: 'self', href: '/gomi', label: 'ごみの分別' },
   {
-    no: 8,
-    name: '子ども・若者',
-    tier: 'A',
-    tools: [{ label: '学びと体験の場', href: '/manabi' }],
-    topic: 'kodomo',
+    ask: '引っ越し先の治安を数字で比べたい',
+    answer: 'self',
+    href: '/bouhan',
+    label: '町丁ごとの認知件数',
   },
   {
-    no: 9,
-    name: '福祉',
-    tier: 'A',
-    tools: [{ label: '車椅子で行ける場所', href: '/barrierfree' }],
-    topic: 'fukushi',
+    ask: '子どもと行ける図書館や博物館は？',
+    answer: 'self',
+    href: '/manabi',
+    label: '学びと体験の場',
   },
-  { no: 10, name: 'デジタル', tier: 'D', topic: 'digital' },
   {
-    no: 11,
-    name: '交通',
-    tier: 'A',
-    tools: [{ label: '駅のバリアフリー', href: '/barrierfree' }],
-    topic: 'kotsu',
+    ask: '車椅子で入れるお店や駅を知りたい',
+    answer: 'self',
+    href: '/barrierfree',
+    label: '車椅子で行ける場所',
   },
-  { no: 12, name: '観光', tier: 'D', topic: 'kanko' },
+  { ask: '地震に備えて何を見ればいい？', answer: 'guide', linkId: 'tokyo-bousai' },
+  { ask: '近くのAEDはどこ？', answer: 'guide', linkId: 'zenkoku-aed-map' },
+  { ask: 'つらいとき、どこに相談すればいい？', answer: 'guide', linkId: 'mamorouyo-kokoro' },
+  { ask: '暑い日に涼める場所はある？', answer: 'guide', linkId: 'tokyo-coolshare' },
+  { ask: 'ボランティアを始めたい', answer: 'guide', linkId: 'tvac-volunteer' },
+  { ask: '子どものことを相談したい', answer: 'guide', linkId: 'wakanavi-alpha' },
+  { ask: 'こども食堂を探している', answer: 'guide', linkId: 'kodomo-shokudo-map' },
 ];
 
-const TIER_MEANING: Record<Theme['tier'], string> = {
-  A: '都全域のデータがある',
-  B: '自治体別だが標準スキーマ',
-  C: 'スキーマがバラバラ',
-  D: '生データが無い／既存が優秀',
-};
+const CHAT_EXAMPLES = [
+  'ペットボトルってどう捨てるの？',
+  'アイロン台を捨てたい',
+  '車椅子で入れるお店を探したい',
+];
 
 export default function Home() {
   return (
     <div className="mx-auto w-full max-w-5xl px-5 pb-20">
       <header className="flex items-baseline justify-between gap-4 border-b border-line py-4">
         <p className="signboard text-base">くらしの道しるべ</p>
-        <p className="text-xs text-muted">東京都オープンデータ活用ポータル</p>
+        <Link
+          href="/chat"
+          className="text-xs font-bold text-accent underline underline-offset-2 hover:no-underline"
+        >
+          困りごとを聞く →
+        </Link>
       </header>
 
       {/* 主張 */}
@@ -149,27 +144,92 @@ export default function Home() {
           AIがするのは、あなたの困りごとがどの分野かを判定して、必要な言葉を取り出すことだけ。
           <strong>分別区分も件数も施設名も、AIが作る経路はありません。</strong>
         </p>
-        <div className="mt-8">
+
+        {/* 入口。送信するとチャット画面へ移る */}
+        <form
+          action="/chat"
+          method="get"
+          className="mt-8 rounded-xl border border-line bg-surface p-5"
+        >
+          <label className="block text-sm font-semibold" htmlFor="q">
+            困りごとを書いてください
+          </label>
+          <div className="mt-2 flex gap-2">
+            <input
+              id="q"
+              name="q"
+              type="search"
+              placeholder="ペットボトルってどう捨てるの？"
+              className="min-w-0 flex-1 rounded-lg border border-line bg-background px-3 py-2"
+            />
+            <button
+              type="submit"
+              className="rounded-lg bg-accent px-5 py-2 font-semibold text-surface"
+            >
+              聞く
+            </button>
+          </div>
+          <p className="mt-3 text-sm text-muted">
+            例：
+            {CHAT_EXAMPLES.map((example, index) => (
+              <span key={example}>
+                {index > 0 && '、'}
+                <Link
+                  href={`/chat?q=${encodeURIComponent(example)}`}
+                  className="underline underline-offset-2 hover:no-underline"
+                >
+                  {example}
+                </Link>
+              </span>
+            ))}
+          </p>
+        </form>
+
+        <div className="mt-6">
           <AnswerPath />
         </div>
       </section>
 
-      {/* 実物 */}
-      <section id="try" className="scroll-mt-4 pt-16">
-        <p className="eyebrow text-muted">試す</p>
-        <h2 className="signboard mt-3 text-2xl">困りごとを書いてください</h2>
+      {/* 聞けること */}
+      <section id="examples" className="scroll-mt-4 pt-16">
+        <p className="eyebrow text-muted">こんなことが聞けます</p>
+        <h2 className="signboard mt-3 text-2xl">たとえば、こんな困りごと</h2>
         <p className="mt-2 max-w-2xl leading-relaxed text-muted">
-          どの分野か判定して、下の4つのうち答えを持っているものが返します。
-          持っていない分野は、担当している公式サービスをご案内します。
+          おおまかに12ほど例を挙げます。
+          <strong className="text-foreground">その場でお答えするもの</strong>と、
+          <strong className="text-foreground">扱っている公式のサービスへご案内するもの</strong>
+          があります。どちらでも、行き先が無いまま終わることはありません。
         </p>
-        <div className="mt-5">
-          <Chat />
-        </div>
+        <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+          {EXAMPLES.map((example) => (
+            <li key={example.ask} className="rounded-xl border border-line bg-surface p-4">
+              <p className="signboard text-base">「{example.ask}」</p>
+              {example.answer === 'self' ? (
+                <Link
+                  href={example.href}
+                  className="mt-2 inline-block text-sm font-bold text-accent underline underline-offset-2 hover:no-underline"
+                >
+                  その場でお答えします（{example.label}）→
+                </Link>
+              ) : (
+                <p className="mt-2 text-sm text-muted">
+                  {getLink(example.linkId).org}「{getLink(example.linkId).name}」へご案内します
+                </p>
+              )}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
+          ほかにも、税金の使いみち・都の手続き・観光・乗り換えなどのご案内先を用意しています。
+          <Link href="#links" className="ml-1 underline underline-offset-2 hover:no-underline">
+            ご案内先の一覧
+          </Link>
+        </p>
       </section>
 
-      {/* 簡易版4本 */}
+      {/* 自前で答える4つ */}
       <section id="tools" className="scroll-mt-4 pt-16">
-        <p className="eyebrow text-muted">自前で答えを持っている4つ</p>
+        <p className="eyebrow text-muted">その場でお答えする4つ</p>
         <h2 className="signboard mt-3 text-2xl">チャットを使わずに直接ひらく</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           {TOOLS.map((tool) => (
@@ -206,6 +266,13 @@ export default function Home() {
             </Link>
           ))}
         </div>
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
+          この4つを自前で持っているのは、
+          <strong className="text-foreground">
+            行政が公開しているデータが揃っていて、しかもばらばらのままだと探しにくい
+          </strong>
+          からです。それ以外は、すでによくできた公式のサービスがあるので、そちらへご案内します。
+        </p>
       </section>
 
       {/* 対比 */}
@@ -213,7 +280,7 @@ export default function Home() {
         <p className="eyebrow text-muted">くらべる</p>
         <h2 className="signboard mt-3 text-2xl">どこが違うのか</h2>
         <p className="mt-2 max-w-2xl leading-relaxed text-muted">
-          行政の情報を扱うので、正しさを人が担保できる形にしています。
+          行政の情報を扱うので、正しさを人が確かめられる形にしています。
           そのために、AIに任せる範囲をどこで切ったかが違いになります。
         </p>
         <div className="mt-5">
@@ -221,70 +288,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 12テーマの網羅状況 */}
-      <section id="scope" className="scroll-mt-4 pt-16">
-        <p className="eyebrow text-muted">カバー範囲</p>
-        <h2 className="signboard mt-3 text-2xl">12のテーマ全部に受け皿があります</h2>
-        <p className="mt-2 max-w-2xl leading-relaxed text-muted">
-          全部を自前では作りません。東京都オープンデータカタログを実際に調べ、データの入手しやすさで
-          テーマを4段階に分け、
-          <strong className="text-foreground">データがあって横断に価値がある領域だけを自前で持ちます</strong>
-          。作らないと決めたテーマも、担当している既存サービスへ必ず送ります。
-        </p>
-        <div className="mt-5 overflow-x-auto rounded-xl border border-line bg-surface">
-          <table className="w-full min-w-[44rem] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-line text-left">
-                <th className="px-4 py-3 font-bold">テーマ</th>
-                <th className="px-4 py-3 font-bold">データの入手しやすさ</th>
-                <th className="px-4 py-3 font-bold">このサービスの対応</th>
-              </tr>
-            </thead>
-            <tbody>
-              {THEMES.map((theme) => (
-                <tr key={theme.no} className="border-b border-line align-top last:border-b-0">
-                  <td className="whitespace-nowrap px-4 py-3">
-                    <span className="figure mr-2 text-muted">{theme.no}</span>
-                    <span className="font-bold">{theme.name}</span>
-                  </td>
-                  <td className="px-4 py-3 leading-relaxed text-muted">
-                    <span className="figure mr-2 font-bold text-foreground">{theme.tier}</span>
-                    {TIER_MEANING[theme.tier]}
-                  </td>
-                  <td className="px-4 py-3 leading-relaxed">
-                    {theme.tools?.map((tool) => (
-                      <Link
-                        key={tool.label}
-                        href={tool.href}
-                        className="mr-2 inline-block rounded bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent underline underline-offset-2 hover:no-underline"
-                      >
-                        自前で答える：{tool.label}
-                      </Link>
-                    ))}
-                    {theme.topic && (
-                      <span className="text-muted">
-                        {theme.tools ? 'それ以外は' : ''}
-                        {TOPIC_LINKS[theme.topic].linkIds
-                          .map((id) => getLink(id).name)
-                          .join('、')}
-                        へ送ります
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
       {/* 送り先 */}
       <section id="links" className="scroll-mt-4 pt-16">
-        <p className="eyebrow text-muted">送り先</p>
+        <p className="eyebrow text-muted">ご案内先</p>
         <h2 className="signboard mt-3 text-2xl">ご案内する公式サービスの全部</h2>
         <p className="mt-2 max-w-2xl leading-relaxed text-muted">
-          分野ごとのご案内先は、この{Object.keys(CURATED_LINKS).length}件がすべてです。一件ずつ人が開いて確認しています。
-          これに加えて、ごみ分別の{GOMI_MUNICIPALITY_COUNT}自治体ぶんの案内先は、
+          この{Object.keys(CURATED_LINKS).length}件がご案内先のすべてです。一件ずつ人が開いて確認しています。
+          これに加えて、ごみ分別の{GOMI_MUNICIPALITY_COUNT}自治体ぶんのご案内先は、
           <strong className="text-foreground">
             東京都オープンデータカタログに各自治体が登録した公式ページを、更新のたびに疎通確認して
           </strong>
@@ -309,10 +319,16 @@ export default function Home() {
         </ul>
       </section>
 
-      <footer className="mt-16 border-t border-line pt-6 text-sm leading-relaxed text-muted">
-        <p>
+      <footer className="mt-16 border-t border-line pt-6">
+        <Link
+          href="/chat"
+          className="inline-block rounded-lg bg-accent px-5 py-2 font-semibold text-surface"
+        >
+          困りごとを聞いてみる →
+        </Link>
+        <p className="mt-5 text-sm leading-relaxed text-muted">
           答えの本文は行政が公開したオープンデータそのものです。
-          申請・予約・申込みといった、住民に責任が発生する手続きは代行せず、必ず公式の窓口へご案内します。
+          申請・予約・申込みといった、あなたに責任が生じる手続きは代行せず、必ず公式の窓口へご案内します。
         </p>
       </footer>
     </div>
