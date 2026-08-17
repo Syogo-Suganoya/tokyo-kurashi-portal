@@ -6,6 +6,10 @@
  *
  * 読み手はハッカソンの審査員ではなく、困りごとを抱えた住民として書く。
  * 「テーマ」「Tier」のような作り手の言葉は出さず、困りごとの言葉で並べる。
+ *
+ * **見出しで訴えるのは「困りごとが片づく」ことであって、AIとの違いではない。**
+ * 住民はAIの作りに関心が無い。答えが返るかどうかにしか関心が無い。
+ * 「AIは答えを書きません」は、正しさを気にする人のための**補足**として下の方に置く。
  */
 
 import Link from 'next/link';
@@ -135,14 +139,16 @@ export default function Home() {
         </Link>
       </header>
 
-      {/* 主張 */}
+      {/* 入口 */}
       <section className="pt-12 sm:pt-16">
-        <p className="eyebrow text-accent">AIチャットとの違い</p>
-        <h1 className="signboard mt-4 text-[clamp(2.25rem,7vw,4rem)]">AIは、答えを書きません。</h1>
+        <h1 className="signboard text-[clamp(2.25rem,7vw,4rem)]">
+          くらしの「どうすればいい？」は、ぜんぶここから。
+        </h1>
         <p className="mt-5 max-w-2xl text-lg leading-relaxed">
-          答えるのは東京都のオープンデータそのものです。
-          AIがするのは、あなたの困りごとがどの分野かを判定して、必要な言葉を取り出すことだけ。
-          <strong>分別区分も件数も施設名も、AIが作る経路はありません。</strong>
+          ごみの分別も、引っ越し先の治安も、車椅子で入れるお店も。
+          東京都のオープンデータから<strong>その場でお答えします</strong>。
+          ここに答えが無いことは、それを扱っている公式のサービスへご案内します。
+          <strong>行き先が無いまま終わることはありません。</strong>
         </p>
 
         {/* 入口。送信するとチャット画面へ移る */}
@@ -184,10 +190,6 @@ export default function Home() {
             ))}
           </p>
         </form>
-
-        <div className="mt-6">
-          <AnswerPath />
-        </div>
       </section>
 
       {/* 聞けること */}
@@ -275,15 +277,26 @@ export default function Home() {
         </p>
       </section>
 
-      {/* 対比 */}
-      <section id="compare" className="scroll-mt-4 pt-16">
-        <p className="eyebrow text-muted">くらべる</p>
-        <h2 className="signboard mt-3 text-2xl">どこが違うのか</h2>
+      {/* しくみ。関心のある人向けの補足として下に置く */}
+      <section id="how" className="scroll-mt-4 pt-16">
+        <p className="eyebrow text-muted">しくみ（補足）</p>
+        <h2 className="signboard mt-3 text-2xl">答えはどこから来るのか</h2>
         <p className="mt-2 max-w-2xl leading-relaxed text-muted">
+          画面に出ている分別区分も件数も施設名も、
+          <strong className="text-foreground">行政が公開しているデータそのもの</strong>
+          です。AIがするのは、あなたの言葉がどの分野かを判定して必要な言葉を取り出すことだけで、
+          <strong className="text-foreground">答えの文章は書きません</strong>。
           行政の情報を扱うので、正しさを人が確かめられる形にしています。
-          そのために、AIに任せる範囲をどこで切ったかが違いになります。
         </p>
         <div className="mt-5">
+          <AnswerPath />
+        </div>
+
+        <h3 className="signboard mt-10 text-lg">よくあるAIチャットとの違い</h3>
+        <p className="mt-2 max-w-2xl leading-relaxed text-muted">
+          資料を検索してAIに要約させる作りとは、AIに任せる範囲の切り方が違います。
+        </p>
+        <div className="mt-4">
           <Contrast />
         </div>
       </section>

@@ -4,7 +4,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'くらしの道しるべ',
   description:
-    '生活の困りごとに、東京都のオープンデータからその場で答えを返します。答えられない部分は、限界を明示して公式サービスへご案内します。',
+    'ごみの分別も、引っ越し先の治安も、車椅子で入れるお店も。東京都のオープンデータからその場でお答えします。ここに答えが無いことは、それを扱っている公式のサービスへご案内します。',
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
