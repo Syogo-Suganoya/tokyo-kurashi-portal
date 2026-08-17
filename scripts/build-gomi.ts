@@ -71,7 +71,23 @@ function resolveColumn(
   return null;
 }
 
+/** 住民への案内先が生きているかを確認する。死んだリンクを住民に出さないための門 */
+async function assertReachable(source: GomiSource): Promise<void> {
+  try {
+    const res = await fetch(source.sourcePage, { headers: { 'user-agent': 'Mozilla/5.0' } });
+    if (!res.ok) {
+      throw new BuildError(
+        `${source.name}: 案内先に繋がりません (HTTP ${res.status}) ${source.sourcePage}`,
+      );
+    }
+  } catch (err) {
+    if (err instanceof BuildError) throw err;
+    throw new BuildError(`${source.name}: 案内先に繋がりません ${source.sourcePage}`);
+  }
+}
+
 async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> {
+  await assertReachable(source);
   const res = await fetch(source.url, { headers: { 'user-agent': 'tokyo-kurashi-portal/0.1' } });
   if (!res.ok) {
     // 台東区のようにカタログのリンクが切れている自治体が実在する（設計書 §2.2②）
@@ -154,6 +170,7 @@ async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> 
     name: source.name,
     sourceName: source.sourceName,
     sourceUrl: source.sourcePage,
+    pageKind: source.pageKind,
     fetchedAt: new Date().toISOString().slice(0, 10),
     ...(dataUpdatedAt ? { dataUpdatedAt } : {}),
     ...(etag ? { etag } : {}),
@@ -166,10 +183,8 @@ async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> 
 
 async function main() {
   console.log(`ごみ分別データを取り込みます（${GOMI_SOURCES.length}自治体）`);
-  const municipalities: GomiMunicipality[] = [];
-  for (const source of GOMI_SOURCES) {
-    municipalities.push(await buildMunicipality(source));
-  }
+  // 29自治体を直列に取ると時間がかかりすぎるので、まとめて取りに行く
+  const municipalities = await Promise.all(GOMI_SOURCES.map(buildMunicipality));
 
   const dataset: GomiDataset = {
     generatedAt: new Date().toISOString().slice(0, 10),

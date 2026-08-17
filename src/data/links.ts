@@ -28,6 +28,16 @@ export const CURATED_LINKS = {
     name: 'ごみ分別チャットボット',
     url: 'https://www.city.tokyo-nakano.lg.jp/kurashi/gomi/chatbot.html',
   },
+  'setagaya-gomi': {
+    org: '世田谷区',
+    name: 'ごみ・リサイクル',
+    url: 'https://www.city.setagaya.lg.jp/02241/407.html',
+  },
+  'taito-gomi': {
+    org: '台東区',
+    name: 'ごみの分け方・出し方',
+    url: 'https://www.city.taito.lg.jp/kurashi/gomi/wakekata/gomiinfo/index.html',
+  },
   'nakano-gomi-top': {
     org: '中野区',
     name: 'ごみ・資源',

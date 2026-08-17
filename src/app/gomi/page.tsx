@@ -92,8 +92,9 @@ export default async function GomiPage({ searchParams }: PageProps<'/gomi'>) {
           </span>
         </div>
         <p className="mt-3 text-xs leading-relaxed text-muted">
-          未対応の区市町村もあえて選べるようにしています。選ぶと、対応していないことをお伝えした上で
-          その区市町村の公式ページへご案内します。
+          未対応の区市町村もあえて選べるようにしています。選ぶと、
+          <strong className="text-foreground">なぜ対応できていないのか</strong>
+          をお伝えした上で、その区市町村の公式ページへご案内します。
         </p>
       </form>
 

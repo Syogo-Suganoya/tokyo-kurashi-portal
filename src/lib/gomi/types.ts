@@ -74,7 +74,13 @@ export type GomiMunicipality = {
   code: string;
   name: string;
   sourceName: string;
+  /** 住民向けの案内先。取り込み時に疎通確認済み */
   sourceUrl: string;
+  /**
+   * 案内先がごみの案内ページか、公式サイトのトップか。
+   * ごみのページだと確認できないものを、ごみのページとして案内しないために持つ。
+   */
+  pageKind: 'gomi' | 'site';
   /** CSVを取得した日 */
   fetchedAt: string;
   /**

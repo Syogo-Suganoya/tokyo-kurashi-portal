@@ -13,13 +13,11 @@
 
 import datasetJson from '@/data/generated/gomi.json';
 import {
-  SURVEYED_MUNICIPALITY_COUNT,
   TOKYO_MUNICIPALITY_COUNT,
   findMunicipality,
-  type Municipality,
-  type SupportedMunicipality,
+  type UnsupportedMunicipality,
 } from '@/data/municipalities';
-import type { AnswerResult, Escalation, Provenance } from '@/types/answer';
+import type { AnswerResult, Escalation, Provenance, VerifiedLink } from '@/types/answer';
 
 import { normalizeSearchKey } from './normalize';
 import { GOMI_CATEGORY_ICON, type GomiDataset, type GomiItem, type GomiMunicipality } from './types';
@@ -45,7 +43,20 @@ export type GomiSearchResult = AnswerResult & {
   alternatives: GomiAlternative[];
 };
 
-const COVERAGE = `都内${TOKYO_MUNICIPALITY_COUNT}区市町村のうち${SUPPORTED_COUNT}自治体に対応（取り込み可能と確認済みなのは${SURVEYED_MUNICIPALITY_COUNT}自治体）`;
+const COVERAGE = `都内${TOKYO_MUNICIPALITY_COUNT}区市町村のうち${SUPPORTED_COUNT}自治体・${GOMI_ITEM_COUNT.toLocaleString()}品目に対応`;
+
+/**
+ * その自治体の案内先。取り込み時に疎通確認済みのURLをそのまま使う。
+ * `pageKind` が `site` のときは、ごみのページだと確認できていないので名前を変える。
+ * ごみのページでないものを「ごみの案内」として見せない。
+ */
+function officialLink(data: GomiMunicipality): VerifiedLink {
+  return {
+    org: data.name,
+    name: data.pageKind === 'gomi' ? 'ごみの分け方・出し方' : '公式サイト',
+    url: data.sourceUrl,
+  };
+}
 
 function getDataset(code: string): GomiMunicipality | undefined {
   return dataset.municipalities.find((m) => m.code === code);
@@ -109,7 +120,7 @@ export function searchGomi(query: GomiQuery): GomiSearchResult {
         .sort((a, b) => a.score - b.score || a.item.n.length - b.item.n.length)
     : [];
 
-  if (hits.length === 0) return notFound(municipality, data, query.item);
+  if (hits.length === 0) return notFound(data, query.item);
 
   const best = hits[0].item;
   const alternatives: GomiAlternative[] = hits.slice(1, 6).map((hit) => ({
@@ -136,8 +147,8 @@ export function searchGomi(query: GomiQuery): GomiSearchResult {
     // 手続き型。申込みという住民に責任が発生する行為は絶対に代行しない（設計書 §5）
     extraEscalations.push({
       kind: 'procedure',
-      reason: '粗大ごみは事前の申込みが必要です。申込みは公式の受付センターで行えます。',
-      linkId: municipality.sodaiLinkId,
+      reason: `粗大ごみは事前の申込みが必要です。申込先は${data.name}の公式ページでご確認ください。この画面から申込みはできません。`,
+      link: officialLink(data),
     });
   }
 
@@ -163,7 +174,7 @@ export function searchGomi(query: GomiQuery): GomiSearchResult {
         reason: data.dataUpdatedAt
           ? `${data.dataUpdatedAt} に更新されたデータです。分別ルールは変わることがあるため、最新は公式でご確認ください。`
           : '分別ルールは変わることがあります。最新は公式でご確認ください。',
-        linkId: municipality.officialLinkId,
+        link: officialLink(data),
       },
       ...extraEscalations,
     ],
@@ -190,13 +201,14 @@ function unknownMunicipality(input: string): GomiSearchResult {
   };
 }
 
-function outOfScope(municipality: Municipality): GomiSearchResult {
+function outOfScope(municipality: UnsupportedMunicipality): GomiSearchResult {
   return {
     answer: null,
     headline: `${municipality.name}はまだ対応していません`,
     provenance: catalogProvenance(),
     limitations: [
-      `${municipality.name}はごみ品目のオープンデータを公開していないため、この簡易版では答えられません。`,
+      // なぜ対応していないかを住民にそのまま見せる。「未対応」だけでは何も伝わらない
+      municipality.reason,
       '対応自治体はデータが揃い次第、順次増やしていきます。',
     ],
     escalations: [
@@ -210,11 +222,7 @@ function outOfScope(municipality: Municipality): GomiSearchResult {
   };
 }
 
-function notFound(
-  municipality: SupportedMunicipality,
-  data: GomiMunicipality,
-  item: string,
-): GomiSearchResult {
+function notFound(data: GomiMunicipality, item: string): GomiSearchResult {
   return {
     answer: null,
     headline: item.trim()
@@ -229,7 +237,7 @@ function notFound(
       {
         kind: 'deep_dive',
         reason: `${data.name}の公式なら、ここに無い品目も調べられます。`,
-        linkId: municipality.notFoundLinkId,
+        link: officialLink(data),
       },
     ],
     alternatives: [],

@@ -36,13 +36,38 @@ export const ESCALATION_LABEL: Record<EscalationKind, string> = {
   deep_dive: '深掘り',
 };
 
+/**
+ * 取り込み時に疎通確認を通したリンク。
+ *
+ * 対応自治体が29に増えたことで、案内先をすべて手書きのキュレーションDBに持つのが現実的でなくなった。
+ * そこで**行政のカタログに登録された公式ページを取り込み時に取得し、その場でHTTPで疎通確認する**
+ * 経路を追加した。繋がらなければビルドが落ちるので、死んだリンクが住民に出ることはない。
+ *
+ * これは「AIがURLを作らない」という原則を崩さない。URLの出どころは行政のカタログであり、
+ * AIの出力が混ざる余地はどこにも無い。むしろ毎ビルドで再確認される分、手書きより強い保証になる。
+ */
+export type VerifiedLink = {
+  org: string;
+  name: string;
+  url: string;
+};
+
 export type Escalation = {
   kind: EscalationKind;
   /** なぜ公式へ送るのかを住民に見せる文言。「逃げ」ではなく設計された引き継ぎであることを画面で示す */
   reason: string;
-  /** キュレーションDBに実在するIDのみ。URLを直接書く経路は用意しない（設計書 §4.2） */
-  linkId: LinkId;
-};
+} & (
+  | {
+      /** キュレーションDBに実在するIDのみ。URLを直接書く経路は用意しない（設計書 §4.2） */
+      linkId: LinkId;
+      link?: never;
+    }
+  | {
+      linkId?: never;
+      /** 取り込み時に疎通確認したリンク */
+      link: VerifiedLink;
+    }
+);
 
 /** ② 出典・時点・カバー範囲。カバー範囲を偽らないための必須項目 */
 export type Provenance = {

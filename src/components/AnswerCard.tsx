@@ -105,7 +105,7 @@ export function AnswerCard({ result }: { result: AnswerResult }) {
         <h3 className="text-sm font-semibold text-muted">公式サービスで続けられます</h3>
         <ul className="mt-3 space-y-3">
           {escalations.map((escalation) => (
-            <EscalationRow key={`${escalation.kind}-${escalation.linkId}`} escalation={escalation} />
+            <EscalationRow key={`${escalation.kind}-${escalation.linkId ?? escalation.link.url}`} escalation={escalation} />
           ))}
         </ul>
       </section>
@@ -114,7 +114,8 @@ export function AnswerCard({ result }: { result: AnswerResult }) {
 }
 
 function EscalationRow({ escalation }: { escalation: Escalation }) {
-  const link = getLink(escalation.linkId);
+  // キュレーションDBのIDか、取り込み時に疎通確認したリンクのどちらか。どちらもAIは触らない
+  const link = escalation.linkId ? getLink(escalation.linkId) : escalation.link;
   return (
     <li className="rounded-lg border border-line p-3">
       <span

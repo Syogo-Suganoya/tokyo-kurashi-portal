@@ -1,63 +1,81 @@
 /**
  * 自治体レジストリ（ごみ分別簡易版）
  *
- * **未対応の自治体も明示的に持つ**のが要点。
- * 対応していない自治体を選択肢から隠すのではなく、選べるようにした上で
- * 「まだ対応していません」と限界を示して公式へ送る（設計書 §5「範囲外」）。
- * カバー範囲を偽らないという設計を、選択肢の作り方の段階から守る。
+ * 対応自治体は**取り込み済みデータから導く**。29自治体を手で書き写すと、
+ * 取り込み設定と一覧がすぐにずれるためである。案内先のURLも取り込み時に
+ * 疎通確認済みのものがデータに入っているので、ここで持つ必要がない。
+ *
+ * 未対応の自治体だけを手で書く。**未対応であることには理由があり、
+ * その理由は住民に見せる価値がある**（設計書 §5「範囲外」）。
+ * 選択肢から隠さず、選べるようにした上で公式へ送る。
  */
 
+import datasetJson from './generated/gomi.json';
+import type { GomiDataset } from '@/lib/gomi/types';
 import type { LinkId } from './links';
+
+const dataset = datasetJson as GomiDataset;
 
 export type SupportedMunicipality = {
   code: string;
   name: string;
   supported: true;
-  /** 鮮度エスカレーションの送り先（自治体のごみ情報トップ） */
-  officialLinkId: LinkId;
-  /** 手続きエスカレーションの送り先（粗大ごみ受付） */
-  sodaiLinkId: LinkId;
-  /** 品目が見つからなかったときの送り先 */
-  notFoundLinkId: LinkId;
 };
 
 export type UnsupportedMunicipality = {
   code: string;
   name: string;
   supported: false;
+  /** なぜ対応していないのか。住民にそのまま見せる */
+  reason: string;
   /** 範囲外エスカレーションの送り先 */
   officialLinkId: LinkId;
 };
 
 export type Municipality = SupportedMunicipality | UnsupportedMunicipality;
 
-export const MUNICIPALITIES: Municipality[] = [
+/**
+ * 対応していない自治体。
+ * 渋谷区はデータが無く、世田谷区と台東区はデータに問題があって取り込めない（設計書 §2.2）。
+ * 「まだ作っていない」ではなく「なぜ入れられないか」を書く。
+ */
+export const UNSUPPORTED_MUNICIPALITIES: UnsupportedMunicipality[] = [
   {
-    code: 'tachikawa',
-    name: '立川市',
-    supported: true,
-    officialLinkId: 'tachikawa-gomi-top',
-    sodaiLinkId: 'tachikawa-sodai',
-    notFoundLinkId: 'tachikawa-gomi-top',
-  },
-  {
-    code: 'nakano',
-    name: '中野区',
-    supported: true,
-    officialLinkId: 'nakano-gomi-top',
-    sodaiLinkId: 'nakano-sodai',
-    // 中野区には公式チャットボットがあるので、品目が見つからないときはそちらへ送る
-    notFoundLinkId: 'nakano-gomi-chatbot',
-  },
-  {
-    // 未対応。渋谷区はごみ品目のオープンデータを公開していないため取り込めない。
-    // 隠さずに選べるようにして、範囲外エスカレーションを実際に見せる（設計書 §7.2）
     code: 'shibuya',
     name: '渋谷区',
     supported: false,
+    reason: '渋谷区はごみ品目のオープンデータを公開していないため、取り込めません。',
     officialLinkId: 'shibuya-gomi-hinmoku',
   },
+  {
+    code: 'setagaya',
+    name: '世田谷区',
+    supported: false,
+    reason:
+      '世田谷区の公開データは列と中身がずれており、そのまま取り込むと誤った分別区分になるため、あえて対応していません。',
+    officialLinkId: 'setagaya-gomi',
+  },
+  {
+    code: 'taito',
+    name: '台東区',
+    supported: false,
+    reason: '台東区の公開データはリンクが切れており取得できないため、対応できていません。',
+    officialLinkId: 'taito-gomi',
+  },
 ];
+
+/** 対応自治体。取り込み済みデータから導くので、設定を増やせば自動で増える */
+export const SUPPORTED_MUNICIPALITIES: SupportedMunicipality[] = dataset.municipalities.map((m) => ({
+  code: m.code,
+  name: m.name,
+  supported: true,
+}));
+
+/** 画面の選択肢。対応・未対応を並べて出す */
+export const MUNICIPALITIES: Municipality[] = [
+  ...SUPPORTED_MUNICIPALITIES,
+  ...UNSUPPORTED_MUNICIPALITIES,
+].sort((a, b) => a.name.localeCompare(b.name, 'ja'));
 
 /** 東京都の区市町村数（23区＋26市＋5町＋8村）。カバー範囲を実数で書くために使う */
 export const TOKYO_MUNICIPALITY_COUNT = 62;

@@ -42,7 +42,7 @@ const TOOLS: Tool[] = [
     figure: GOMI_ITEM_COUNT.toLocaleString(),
     unit: `品目 / ${GOMI_MUNICIPALITY_COUNT}自治体`,
     body: '品目名を入れると、その自治体の公式表記のまま分別区分・注意点・粗大ごみ料金が出ます。',
-    edge: '区ごとに別サイトの公式チャットボットを、同じ画面で引けます。',
+    edge: `区市町村ごとに別サイトの公式チャットボットを、${GOMI_MUNICIPALITY_COUNT}自治体ぶん同じ画面で引けます。`,
   },
   {
     href: '/bouhan',
