@@ -49,6 +49,3 @@ next-env.d.ts
 
 # エディタの個人設定
 /.vscode/
-
-# 構成図を作るときの仮想環境
-/.venv-diagrams/

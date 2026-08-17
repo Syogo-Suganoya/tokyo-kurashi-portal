@@ -8,10 +8,13 @@
 AIも同じ Cloudflare 上の Workers AI をバインディングで呼ぶので、APIキーが存在しない。
 
 実行:
-    brew install graphviz                 # dot コマンド（初回のみ）
-    python3 -m venv .venv-diagrams        # 初回のみ
-    .venv-diagrams/bin/pip install diagrams
-    .venv-diagrams/bin/python docs/architecture.py
+    brew install graphviz                                  # dot コマンド（初回のみ）
+    /opt/homebrew/bin/python3 -m pip install --break-system-packages --user diagrams
+    /opt/homebrew/bin/python3 docs/architecture.py
+
+Homebrew の python は外部管理（PEP 668）なので、そのままでは pip を拒否する。
+`--user` を付けるのは Homebrew 自身の推奨で、Homebrew の site-packages を汚さずに
+ホーム側（~/Library/Python/3.14/lib/python/site-packages）へ入れるため。
 
 出力: docs/architecture.png（生成物だが、プレゼンで使うのでコミットする）
 """
