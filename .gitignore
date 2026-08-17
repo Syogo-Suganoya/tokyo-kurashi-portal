@@ -46,3 +46,6 @@ next-env.d.ts
 
 # maplibre のワーカーは node_modules からコピーして生成する
 /public/maplibre/
+
+# エディタの個人設定
+/.vscode/
