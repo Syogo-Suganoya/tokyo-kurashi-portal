@@ -33,7 +33,7 @@ export default async function GomiPage({ searchParams }: PageProps<'/gomi'>) {
           くらしの道しるべ
         </Link>
       </p>
-      <h1 className="mt-2 text-3xl font-bold">ごみの分別を調べる</h1>
+      <h1 className="signboard mt-2 text-3xl">ごみの分別を調べる</h1>
       <p className="mt-3 leading-relaxed text-muted">
         東京都オープンデータから取り込んだ分別データで、その場でお答えします。
         分別区分は<strong className="text-foreground">自治体の公式表記のまま</strong>
@@ -103,7 +103,7 @@ export default async function GomiPage({ searchParams }: PageProps<'/gomi'>) {
 
           {result.alternatives.length > 0 && (
             <section className="mt-4 rounded-xl border border-line bg-surface p-5">
-              <h2 className="text-sm font-semibold text-muted">
+              <h2 className="eyebrow text-muted">
                 同じ言葉で見つかった他の品目
               </h2>
               <ul className="mt-3 space-y-2 text-sm">

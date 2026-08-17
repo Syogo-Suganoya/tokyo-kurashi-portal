@@ -56,7 +56,7 @@ export default async function BarrierFreePage({ searchParams }: PageProps<'/barr
           くらしの道しるべ
         </Link>
       </p>
-      <h1 className="mt-2 text-3xl font-bold">車椅子で行ける場所をさがす</h1>
+      <h1 className="signboard mt-2 text-3xl">車椅子で行ける場所をさがす</h1>
       <p className="mt-3 max-w-3xl leading-relaxed text-muted">
         バリアフリーの情報は、東京都の中でも
         {BARRIERFREE_ORGS.map((o) => o.org).join('・')}
@@ -160,7 +160,7 @@ export default async function BarrierFreePage({ searchParams }: PageProps<'/barr
 
       {result.spots.length > 0 && (
         <section className="mt-6 rounded-xl border border-line bg-surface p-5">
-          <h2 className="text-sm font-semibold text-muted">
+          <h2 className="eyebrow text-muted">
             一覧（{result.spots.length.toLocaleString()}か所
             {result.spots.length > LIST_LIMIT && ` のうち${LIST_LIMIT}か所を表示`}）
           </h2>

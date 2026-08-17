@@ -27,6 +27,10 @@ import { GOMI_CATEGORY_ICON, type GomiDataset, type GomiItem, type GomiMunicipal
 const dataset = datasetJson as GomiDataset;
 const SUPPORTED_COUNT = dataset.municipalities.length;
 
+/** 画面の見出しで使う実数。数字を手で書かず、取り込んだデータから出す */
+export const GOMI_MUNICIPALITY_COUNT = SUPPORTED_COUNT;
+export const GOMI_ITEM_COUNT = dataset.municipalities.reduce((n, m) => n + m.items.length, 0);
+
 export type GomiQuery = {
   /** 品目名。「ペットボトル」「アイロン台」など */
   item: string;

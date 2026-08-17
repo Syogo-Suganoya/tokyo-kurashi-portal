@@ -36,7 +36,7 @@ export default async function BouhanPage({ searchParams }: PageProps<'/bouhan'>)
           くらしの道しるべ
         </Link>
       </p>
-      <h1 className="mt-2 text-3xl font-bold">町丁ごとの犯罪認知件数を調べる</h1>
+      <h1 className="signboard mt-2 text-3xl">町丁ごとの犯罪認知件数を調べる</h1>
       <p className="mt-3 max-w-3xl leading-relaxed text-muted">
         警視庁が公開している町丁別の認知件数を、そのまま数字でお見せします。
         2つ入力すると並べて比べられます。
@@ -98,7 +98,7 @@ export default async function BouhanPage({ searchParams }: PageProps<'/bouhan'>)
               <AnswerCard result={result} />
               {result.alternatives.length > 0 && (
                 <section className="mt-4 rounded-xl border border-line bg-surface p-5">
-                  <h2 className="text-sm font-semibold text-muted">
+                  <h2 className="eyebrow text-muted">
                     同じ言葉で見つかった他の町丁
                   </h2>
                   <ul className="mt-3 space-y-2 text-sm">

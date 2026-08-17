@@ -48,7 +48,7 @@ export default async function ManabiPage({ searchParams }: PageProps<'/manabi'>)
           くらしの道しるべ
         </Link>
       </p>
-      <h1 className="mt-2 text-3xl font-bold">学びと体験の場をさがす</h1>
+      <h1 className="signboard mt-2 text-3xl">学びと体験の場をさがす</h1>
       <p className="mt-3 max-w-3xl leading-relaxed text-muted">
         図書館・博物館・公民館・青少年施設などは、種別ごとに別々のサイトで案内されています。
         ここでは東京都教育庁が公開する9種別を
@@ -140,7 +140,7 @@ export default async function ManabiPage({ searchParams }: PageProps<'/manabi'>)
           </div>
 
           <section className="mt-6 rounded-xl border border-line bg-surface p-5">
-            <h2 className="text-sm font-semibold text-muted">
+            <h2 className="eyebrow text-muted">
               一覧（{result.facilities.length.toLocaleString()}件
               {result.facilities.length > LIST_LIMIT && ` のうち${LIST_LIMIT}件を表示`}）
             </h2>

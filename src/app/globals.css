@@ -1,15 +1,32 @@
 @import "tailwindcss";
 
+/**
+ * 見た目の下敷きは「街の案内標識」。
+ * サービス名が「道しるべ」であり、機能の中心も“どこへ送るか”なので、
+ * 案内板の語彙（濃い藍の地／白抜き／太い矢印／分野ごとの色帯）をそのまま設計言語にしている。
+ * 装飾のための色ではなく、分野を見分けるための色として使う。
+ */
+
 :root {
-  --background: #f6f7f9;
+  --background: #eef1f5;
   --surface: #ffffff;
-  --foreground: #16181d;
-  --muted: #5b6370;
-  --border: #dfe3e8;
-  --accent: #16603f;
-  --accent-soft: #e6f2eb;
-  --warn: #8a4b00;
-  --warn-soft: #fdf1e2;
+  --foreground: #0f1720;
+  --muted: #5a6472;
+  --border: #d6dce4;
+
+  /* 標識の藍。システム全体の主色 */
+  --accent: #17408b;
+  --accent-soft: #e3eaf6;
+
+  /* 注意書き（できないこと・範囲外）。赤ではなく琥珀にして、禁止ではなく注記として読ませる */
+  --warn: #8a4409;
+  --warn-soft: #fbf0e2;
+
+  /* 分野の識別色。4本の簡易版を色で見分けるためのもの */
+  --route-gomi: #1f6b45;
+  --route-bouhan: #17408b;
+  --route-manabi: #9a4a12;
+  --route-barrierfree: #5f3a96;
 }
 
 @theme inline {
@@ -26,15 +43,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0e1013;
-    --surface: #171a1f;
-    --foreground: #e9ebef;
-    --muted: #9aa3b0;
-    --border: #2b3038;
-    --accent: #6ec49b;
-    --accent-soft: #12291f;
-    --warn: #e8b478;
-    --warn-soft: #2a1f12;
+    --background: #0d1219;
+    --surface: #151b24;
+    --foreground: #e6eaf0;
+    --muted: #94a0b0;
+    --border: #242c38;
+
+    --accent: #8fb0e8;
+    --accent-soft: #16233c;
+
+    --warn: #e2ab6d;
+    --warn-soft: #2a2013;
+
+    --route-gomi: #63b98c;
+    --route-bouhan: #8fb0e8;
+    --route-manabi: #d59a63;
+    --route-barrierfree: #a98ada;
   }
 }
 
@@ -49,4 +73,39 @@ body {
     "Yu Gothic UI",
     Meiryo,
     sans-serif;
+  /* 和文を文節で折り返す。「東京都のオー／プンデータ」のような読みにくい改行を防ぐ */
+  word-break: auto-phrase;
+}
+
+/**
+ * 見出しは案内板の文字。字間を詰めて、太く、行間を締める。
+ * 和文の見出しは既定の字間だと間延びして読みにくい。
+ */
+.signboard {
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  font-weight: 700;
+}
+
+/** 件数などの数値。案内板の番号のように等幅で揃える */
+.figure {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/** セクションの前置き。字間を開けて小さく置く */
+.eyebrow {
+  letter-spacing: 0.22em;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

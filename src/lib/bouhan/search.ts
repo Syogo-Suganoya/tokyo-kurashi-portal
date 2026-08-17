@@ -25,6 +25,10 @@ import type { BouhanDataset, BouhanArea } from './types';
 const dataset = datasetJson as BouhanDataset;
 const TOTAL_INDEX = dataset.cols.indexOf('総合計');
 
+/** 画面の見出しで使う実数 */
+export const BOUHAN_AREA_COUNT = dataset.areas.length;
+export const BOUHAN_YEAR = dataset.year;
+
 export type BouhanQuery = {
   /** 町丁名または区市町村名。「丸の内１丁目」「立川市」など */
   area: string;

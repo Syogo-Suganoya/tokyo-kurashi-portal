@@ -34,6 +34,8 @@ export type ManabiSearchResult = AnswerResult & {
 };
 
 export const MANABI_KINDS = dataset.kinds;
+/** 画面の見出しで使う実数 */
+export const MANABI_FACILITY_COUNT = dataset.facilities.length;
 export const MANABI_MUNICIPALITIES = dataset.municipalities;
 
 function provenance(): Provenance {
