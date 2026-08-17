@@ -15,7 +15,8 @@ import Link from 'next/link';
 import { Chat } from '@/components/Chat';
 import { Pictogram, type ToolIcon } from '@/components/Pictogram';
 import { AnswerPath, Contrast } from '@/components/Signpost';
-import { CURATED_LINKS } from '@/data/links';
+import { CURATED_LINKS, getLink } from '@/data/links';
+import { TOPIC_LINKS, type KnownTopic } from '@/lib/ai/tools';
 import { BARRIERFREE_ORGS, BARRIERFREE_TOTAL } from '@/lib/barrierfree/search';
 import { BOUHAN_AREA_COUNT, BOUHAN_YEAR } from '@/lib/bouhan/search';
 import { GOMI_ITEM_COUNT, GOMI_MUNICIPALITY_COUNT } from '@/lib/gomi/search';
@@ -76,42 +77,60 @@ const TOOLS: Tool[] = [
   },
 ];
 
-type TierRow = {
+/**
+ * 設計書 §10 の12テーマ。**どのテーマにも受け皿があることを画面で示す。**
+ * 自前で答えるものは `tools`、既存へ送るものは `topic`（キュレーションDBのIDはそこから引く）。
+ * 受け皿の無いテーマを作らないことが、このサービスの約束そのものなので一覧で見せる。
+ */
+type Theme = {
+  no: number;
+  name: string;
   tier: 'A' | 'B' | 'C' | 'D';
-  meaning: string;
-  themes: string;
-  stance: string;
-  built?: boolean;
+  /** 自前で答える簡易版 */
+  tools?: { label: string; href: Tool['href'] }[];
+  /** 既存サービスへ送る場合の分野キー */
+  topic?: KnownTopic;
 };
 
-const TIERS: TierRow[] = [
+const THEMES: Theme[] = [
+  { no: 1, name: '防災', tier: 'C', topic: 'bousai' },
+  { no: 2, name: '防犯', tier: 'A', tools: [{ label: '認知件数', href: '/bouhan' }], topic: 'bouhan' },
+  { no: 3, name: '健康・医療', tier: 'C', topic: 'kenko' },
+  { no: 4, name: '環境（ごみ）', tier: 'B', tools: [{ label: 'ごみの分別', href: '/gomi' }] },
+  { no: 5, name: '気候変動', tier: 'D', topic: 'kikou' },
+  { no: 6, name: '生活（税金・支援）', tier: 'D', topic: 'zeikin' },
+  { no: 7, name: '社会参加', tier: 'D', topic: 'shakai' },
   {
+    no: 8,
+    name: '子ども・若者',
     tier: 'A',
-    meaning: '都全域の一括データがある',
-    themes: '防犯 / 学び・体験 / バリアフリー',
-    stance: '自前で持つ',
-    built: true,
+    tools: [{ label: '学びと体験の場', href: '/manabi' }],
+    topic: 'kodomo',
   },
   {
-    tier: 'B',
-    meaning: '自治体別だが国の推奨データセット標準スキーマに準拠',
-    themes: 'ごみ分別',
-    stance: '自前で持つ',
-    built: true,
+    no: 9,
+    name: '福祉',
+    tier: 'A',
+    tools: [{ label: '車椅子で行ける場所', href: '/barrierfree' }],
+    topic: 'fukushi',
   },
+  { no: 10, name: 'デジタル', tier: 'D', topic: 'digital' },
   {
-    tier: 'C',
-    meaning: '自治体別でスキーマがバラバラ。名寄せの手間が見合わない',
-    themes: '避難所 / AED / こども食堂 / 保育所 / 公衆トイレ',
-    stance: '作らない。既存サービスへ送る',
+    no: 11,
+    name: '交通',
+    tier: 'A',
+    tools: [{ label: '駅のバリアフリー', href: '/barrierfree' }],
+    topic: 'kotsu',
   },
-  {
-    tier: 'D',
-    meaning: '使える生データが無い、または既存の完成度が高い',
-    themes: '税金 / 観光 / デジタル / 社会参加 / 気候変動',
-    stance: '作らない。既存の劣化版にしかならない',
-  },
+  { no: 12, name: '観光', tier: 'D', topic: 'kanko' },
 ];
+
+const TIER_MEANING: Record<Theme['tier'], string> = {
+  A: '都全域のデータがある',
+  B: '自治体別だが標準スキーマ',
+  C: 'スキーマがバラバラ',
+  D: '生データが無い／既存が優秀',
+};
 
 export default function Home() {
   return (
@@ -202,35 +221,53 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 作らないと決めたもの */}
+      {/* 12テーマの網羅状況 */}
       <section id="scope" className="scroll-mt-4 pt-16">
-        <p className="eyebrow text-muted">作らないと決めたもの</p>
-        <h2 className="signboard mt-3 text-2xl">全部を自前では作りません</h2>
+        <p className="eyebrow text-muted">カバー範囲</p>
+        <h2 className="signboard mt-3 text-2xl">12のテーマ全部に受け皿があります</h2>
         <p className="mt-2 max-w-2xl leading-relaxed text-muted">
-          東京都オープンデータカタログを実際に調べ、データの入手しやすさでテーマを4段階に分けました。
-          データがあって横断に価値がある領域だけを自前で持ち、それ以外は優れた既存サービスへ送ります。
+          全部を自前では作りません。東京都オープンデータカタログを実際に調べ、データの入手しやすさで
+          テーマを4段階に分け、
+          <strong className="text-foreground">データがあって横断に価値がある領域だけを自前で持ちます</strong>
+          。作らないと決めたテーマも、担当している既存サービスへ必ず送ります。
         </p>
         <div className="mt-5 overflow-x-auto rounded-xl border border-line bg-surface">
-          <table className="w-full min-w-[40rem] border-collapse text-sm">
+          <table className="w-full min-w-[44rem] border-collapse text-sm">
             <thead>
               <tr className="border-b border-line text-left">
-                <th className="px-4 py-3 font-bold">段階</th>
-                <th className="px-4 py-3 font-bold">データの入手しやすさ</th>
                 <th className="px-4 py-3 font-bold">テーマ</th>
-                <th className="px-4 py-3 font-bold">方針</th>
+                <th className="px-4 py-3 font-bold">データの入手しやすさ</th>
+                <th className="px-4 py-3 font-bold">このサービスの対応</th>
               </tr>
             </thead>
             <tbody>
-              {TIERS.map((row) => (
-                <tr key={row.tier} className="border-b border-line align-top last:border-b-0">
-                  <td className="figure px-4 py-3 text-lg font-bold">{row.tier}</td>
-                  <td className="px-4 py-3 leading-relaxed text-muted">{row.meaning}</td>
-                  <td className="px-4 py-3 leading-relaxed">{row.themes}</td>
+              {THEMES.map((theme) => (
+                <tr key={theme.no} className="border-b border-line align-top last:border-b-0">
+                  <td className="whitespace-nowrap px-4 py-3">
+                    <span className="figure mr-2 text-muted">{theme.no}</span>
+                    <span className="font-bold">{theme.name}</span>
+                  </td>
+                  <td className="px-4 py-3 leading-relaxed text-muted">
+                    <span className="figure mr-2 font-bold text-foreground">{theme.tier}</span>
+                    {TIER_MEANING[theme.tier]}
+                  </td>
                   <td className="px-4 py-3 leading-relaxed">
-                    {row.stance}
-                    {row.built && (
-                      <span className="ml-2 inline-block rounded bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent">
-                        実装済み
+                    {theme.tools?.map((tool) => (
+                      <Link
+                        key={tool.label}
+                        href={tool.href}
+                        className="mr-2 inline-block rounded bg-accent-soft px-2 py-0.5 text-xs font-bold text-accent underline underline-offset-2 hover:no-underline"
+                      >
+                        自前で答える：{tool.label}
+                      </Link>
+                    ))}
+                    {theme.topic && (
+                      <span className="text-muted">
+                        {theme.tools ? 'それ以外は' : ''}
+                        {TOPIC_LINKS[theme.topic].linkIds
+                          .map((id) => getLink(id).name)
+                          .join('、')}
+                        へ送ります
                       </span>
                     )}
                   </td>
@@ -246,9 +283,12 @@ export default function Home() {
         <p className="eyebrow text-muted">送り先</p>
         <h2 className="signboard mt-3 text-2xl">ご案内する公式サービスの全部</h2>
         <p className="mt-2 max-w-2xl leading-relaxed text-muted">
-          この{Object.keys(CURATED_LINKS).length}件がご案内先のすべてです。
-          一件ずつ人が開いて確認しています。AIがURLを作ることはないので、
-          存在しないページへご案内することはありません。
+          分野ごとのご案内先は、この{Object.keys(CURATED_LINKS).length}件がすべてです。一件ずつ人が開いて確認しています。
+          これに加えて、ごみ分別の{GOMI_MUNICIPALITY_COUNT}自治体ぶんの案内先は、
+          <strong className="text-foreground">
+            東京都オープンデータカタログに各自治体が登録した公式ページを、更新のたびに疎通確認して
+          </strong>
+          使っています。どちらもAIがURLを作ることはないので、存在しないページへご案内することはありません。
         </p>
         <ul className="mt-5 grid gap-2 sm:grid-cols-2">
           {Object.entries(CURATED_LINKS).map(([id, link]) => (

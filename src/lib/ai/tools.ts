@@ -22,45 +22,80 @@ import { FEATURE_KEYS, FEATURE_LABEL } from '@/lib/barrierfree/types';
 /** AIに提示する施設区分。取り込んだデータの区分そのものなので、勝手な区分名は出てこない */
 const MANABI_KIND_NAMES = MANABI_KINDS;
 
-/** `no_tool` が返せる分野。自由記述ではなく閉じた列挙にすることが要点 */
+/**
+ * `no_tool` が返せる分野。自由記述ではなく閉じた列挙にすることが要点。
+ *
+ * **設計書 §10 の12テーマすべてに受け皿を用意する。** 受け皿が無い分野は `other` に落ちて
+ * 汎用の横断検索へ流れてしまい、住民から見れば「答えてくれない」のと変わらない。
+ * 自前の簡易版を持たない分野こそ、担当している既存サービスへ正確に送ることに価値がある。
+ */
 export const KNOWN_TOPICS = [
-  'bousai',
-  'bouhan',
-  'kenko',
-  'fukushi',
-  'kodomo',
-  'zeikin',
-  'kanko',
-  'other',
+  'bousai', // 1 防災
+  'bouhan', // 2 防犯（簡易版あり。場所が取れないときだけここへ）
+  'kenko', // 3 健康・医療
+  'kikou', // 5 気候変動
+  'seikatsu', // 6 生活（税金・支援）
+  'zeikin', // 6 生活のうち税金の使い道
+  'shakai', // 7 社会参加
+  'kodomo', // 8 子ども・若者
+  'fukushi', // 9 福祉
+  'digital', // 10 デジタル
+  'kotsu', // 11 交通
+  'kanko', // 12 観光
+  'other', // どれにも当てはまらないとき
 ] as const;
 
 export type KnownTopic = (typeof KNOWN_TOPICS)[number];
 
-/** 分野 → キュレーションDBのID。AIの出力が触れるのはキーだけで、URLには届かない */
+/**
+ * 分野 → キュレーションDBのID。AIの出力が触れるのはキーだけで、URLには届かない。
+ * 4 環境（ごみ）と 2 防犯 は自前の簡易版が答えるため、ここには出口だけを置く。
+ */
 export const TOPIC_LINKS: Record<KnownTopic, { message: string; linkIds: LinkId[] }> = {
   bousai: {
     message: '防災については、東京都の公式情報がまとまっています。',
     linkIds: ['tokyo-bousai'],
   },
   bouhan: {
-    message: '防犯については、地図で見られる公式サービスがあります。',
+    message: '防犯については、地図で見られる公式サービスがあります。町丁名が分かれば件数もお答えできます。',
     linkIds: ['tokyo-bouhan-map', 'keishicho-hassei-map'],
   },
   kenko: {
-    message: '健康・医療については、公式の検索サービスがあります。',
-    linkIds: ['zenkoku-aed-map'],
+    message: '健康・医療については、公式の検索サービスがあります。こころの相談窓口もこちらから探せます。',
+    linkIds: ['tokyo-navii', 'zenkoku-aed-map', 'mamorouyo-kokoro'],
   },
-  fukushi: {
-    message: 'こども食堂については、全国をカバーした地図があります。',
-    linkIds: ['kodomo-shokudo-map'],
+  kikou: {
+    message: '暑さ対策については、涼める場所を地図で探せるサービスがあります。',
+    linkIds: ['tokyo-coolshare'],
   },
-  kodomo: {
-    message: '子ども・若者の相談先は、都の窓口が対応しています。',
+  seikatsu: {
+    message: '暮らしの支援制度は、都の横断検索から探せます。',
     linkIds: ['tokyo-shien-navi'],
   },
   zeikin: {
     message: '税金の使い道は、都のダッシュボードで見られます。',
     linkIds: ['shintosei-zeishunyu'],
+  },
+  shakai: {
+    message: 'ボランティアや地域活動は、東京ボランティア・市民活動センターが窓口です。',
+    linkIds: ['tvac-volunteer'],
+  },
+  kodomo: {
+    message: '子ども・若者の相談は、都の専門窓口が対応しています。',
+    linkIds: ['wakanavi-alpha', 'tokyo-shien-navi'],
+  },
+  fukushi: {
+    message: 'こども食堂については、全国をカバーした地図があります。',
+    linkIds: ['kodomo-shokudo-map'],
+  },
+  digital: {
+    message: '都の手続きやお知らせは、公式アプリとMy TOKYOにまとまっています。',
+    linkIds: ['tokyo-app', 'my-tokyo'],
+  },
+  kotsu: {
+    message:
+      '乗り換えや経路の案内は民間のサービスが十分に優れているため、自前では持っていません。駅のバリアフリー設備であればこの画面で調べられます。',
+    linkIds: ['toei-kotsu', 'daredemo-tokyo'],
   },
   kanko: {
     message: '観光については、都の公式サイトが充実しています。',

@@ -78,7 +78,7 @@ export const CURATED_LINKS = {
     url: 'https://www.daredemo-tokyo.metro.tokyo.lg.jp/',
   },
 
-  // --- 他テーマ（Tier C・Dの主回答。今回は未使用だが §10 の初期データとして保持） ---
+  // --- Tier C・D の主回答（設計書 §10。12テーマすべてに受け皿を用意する） ---
   'tokyo-bousai': {
     org: '東京都',
     name: '東京都防災ホームページ',
@@ -93,6 +93,46 @@ export const CURATED_LINKS = {
     org: '警視庁',
     name: '事件事故発生マップ',
     url: 'https://www.keishicho.metro.tokyo.lg.jp/jiken_jiko/hassei/map_annai.html',
+  },
+  'tokyo-navii': {
+    org: '東京都',
+    name: '医療情報ネット「ナビイ」',
+    url: 'https://www.hokeniryo.metro.tokyo.lg.jp/iryo/iryo_hoken/medical_info/navii',
+  },
+  'mamorouyo-kokoro': {
+    org: '厚生労働省',
+    name: 'まもろうよ こころ（相談窓口）',
+    url: 'https://www.mhlw.go.jp/mamorouyokokoro/soudan/sonota/',
+  },
+  'tokyo-coolshare': {
+    org: '東京都',
+    name: '熱中症対策ポータル クールシェアスポットマップ',
+    url: 'https://wbgt.metro.tokyo.lg.jp/effort/coolshare/',
+  },
+  'tvac-volunteer': {
+    org: '東京ボランティア・市民活動センター',
+    name: 'ボラ市民ウェブ',
+    url: 'https://www.tvac.or.jp/',
+  },
+  'wakanavi-alpha': {
+    org: '東京都若者総合相談センター',
+    name: '若ナビα',
+    url: 'https://www.wakanavi-tokyo.metro.tokyo.lg.jp/',
+  },
+  'tokyo-app': {
+    org: '東京都',
+    name: '東京都公式アプリ',
+    url: 'https://www.tokyoapp.metro.tokyo.lg.jp/',
+  },
+  'my-tokyo': {
+    org: '東京都',
+    name: 'My TOKYO',
+    url: 'https://www.my.metro.tokyo.lg.jp/',
+  },
+  'toei-kotsu': {
+    org: '東京都交通局',
+    name: '都営交通の公式サイト',
+    url: 'https://www.kotsu.metro.tokyo.jp/',
   },
   'zenkoku-aed-map': {
     org: '日本救急医療財団',
