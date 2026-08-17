@@ -38,6 +38,12 @@ const OUT_PATH = resolve(
  */
 const CATEGORY_VARIETY_LIMIT = 0.5;
 
+/**
+ * 品目の異なり数の下限。これを下回ったら品目列に分別区分が入っていると判断する。
+ * 品目名はほぼ全行で異なるので、実データでは 1.0 前後になる。
+ */
+const ITEM_VARIETY_FLOOR = 0.5;
+
 class BuildError extends Error {}
 
 /**
@@ -56,6 +62,18 @@ function decodeCsv(buf: Buffer): { text: string; encoding: string } {
   return { text: iconv.decode(buf, 'cp932'), encoding: 'cp932' };
 }
 
+/**
+ * 金額として読める値か。
+ *
+ * 料金の列には2種類の中身が混ざっている。`粗大ごみ回収料金` は「500」のような金額だが、
+ * `料金種別` は「無料」「有料」という種別で、金額ではない。
+ * 区別せずに持つと画面に「無料円」と出る（実際に10自治体で出ていた）。
+ */
+function isAmount(value: string | undefined): boolean {
+  if (!value) return false;
+  return /^[0-9０-９][0-9０-９,，]*$/.test(value);
+}
+
 /** 候補列名のうち、実際に中身が入っている最初の列を採る */
 function resolveColumn(
   rows: Record<string, string>[],
@@ -71,10 +89,22 @@ function resolveColumn(
   return null;
 }
 
+/**
+ * 名乗るユーザーエージェント。
+ *
+ * 自治体のサイトには WAF が入っていることがあり、`Mozilla/5.0` だけの短い名乗りや
+ * 製品名だけの名乗りは 403 で弾かれる（東村山市で実際に起きた）。
+ * **こちらの名乗りが弾かれただけなのに「案内先が死んでいる」と判定してしまい、
+ * 実際には生きている自治体を対応外にしていた。**
+ * 素性を隠さずに、一般的なボットの書式（`Mozilla/5.0 (compatible; 名前; +URL)`）で名乗る。
+ */
+const USER_AGENT =
+  'Mozilla/5.0 (compatible; tokyo-kurashi-portal/0.1; +https://github.com/Syogo-Suganoya/tokyo-kurashi-portal)';
+
 /** 住民への案内先が生きているかを確認する。死んだリンクを住民に出さないための門 */
 async function assertReachable(source: GomiSource): Promise<void> {
   try {
-    const res = await fetch(source.sourcePage, { headers: { 'user-agent': 'Mozilla/5.0' } });
+    const res = await fetch(source.sourcePage, { headers: { 'user-agent': USER_AGENT } });
     if (!res.ok) {
       throw new BuildError(
         `${source.name}: 案内先に繋がりません (HTTP ${res.status}) ${source.sourcePage}`,
@@ -88,7 +118,7 @@ async function assertReachable(source: GomiSource): Promise<void> {
 
 async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> {
   await assertReachable(source);
-  const res = await fetch(source.url, { headers: { 'user-agent': 'tokyo-kurashi-portal/0.1' } });
+  const res = await fetch(source.url, { headers: { 'user-agent': USER_AGENT } });
   if (!res.ok) {
     // 台東区のようにカタログのリンクが切れている自治体が実在する（設計書 §2.2②）
     throw new BuildError(`${source.name}: CSVを取得できません (HTTP ${res.status}) ${source.url}`);
@@ -131,6 +161,20 @@ async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> 
     );
   }
 
+  /*
+   * 逆向きの検証。品目列の異なり数が少なすぎるなら、そこに入っているのは品目ではなく区分。
+   * 世田谷区は品目列と分別区分列の中身が入れ替わっており、設定でそれを打ち消している。
+   * 打ち消しを間違えた（あるいは公開側が直した）ときに黙って通らないよう、両側から見張る。
+   */
+  const distinctItems = new Set(rows.map((r) => r[itemCol.column]?.trim()).filter(Boolean));
+  const itemVariety = distinctItems.size / rows.length;
+  if (itemVariety < ITEM_VARIETY_FLOOR) {
+    throw new BuildError(
+      `${source.name}: 品目の異なり数が少なすぎます（${distinctItems.size}種 / ${rows.length}行 = ${(itemVariety * 100).toFixed(0)}%）。` +
+        `品目列に分別区分が入っている可能性が高いため取り込みを中止します。列マッピングを確認してください。`,
+    );
+  }
+
   const items: GomiItem[] = [];
   for (const row of rows) {
     const name = row[itemCol.column]?.trim();
@@ -139,7 +183,9 @@ async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> 
 
     const kana = kanaCol ? row[kanaCol.column]?.trim() : '';
     const note = noteCol ? row[noteCol.column]?.trim() : '';
-    const fee = feeCol ? row[feeCol.column]?.trim() : '';
+    const feeRaw = feeCol ? row[feeCol.column]?.trim() : '';
+    const fee = isAmount(feeRaw) ? feeRaw : '';
+    const feeKind = feeRaw && !fee ? feeRaw : '';
 
     items.push({
       n: name,
@@ -147,9 +193,13 @@ async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> 
       k: classifyCategory(category),
       ...(note ? { note } : {}),
       ...(fee ? { fee } : {}),
+      ...(feeKind ? { feeKind } : {}),
       s: normalizeSearchKey(`${name}${kana ? ` ${kana}` : ''}`),
     });
   }
+
+  /** 金額を持っている品目が1件でもあるか。「無料」しか無い自治体は金額を答えられない */
+  const hasAmount = items.some((i) => i.fee);
 
   const kanaFilled = kanaCol ? kanaCol.filled : 0;
   console.log(
@@ -176,7 +226,7 @@ async function buildMunicipality(source: GomiSource): Promise<GomiMunicipality> 
     ...(etag ? { etag } : {}),
     // 列があっても中身が空なら false。立川市のカナ列がこれに当たる
     hasKana: kanaFilled > 0,
-    hasFee: (feeCol?.filled ?? 0) > 0,
+    hasFee: hasAmount,
     items,
   };
 }

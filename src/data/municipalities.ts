@@ -35,31 +35,29 @@ export type UnsupportedMunicipality = {
 export type Municipality = SupportedMunicipality | UnsupportedMunicipality;
 
 /**
- * 対応していない自治体。
- * 渋谷区はデータが無く、世田谷区と台東区はデータに問題があって取り込めない（設計書 §2.2）。
- * 「まだ作っていない」ではなく「なぜ入れられないか」を書く。
+ * 対応していない自治体（2026-08-17 に全件を再調査した結果）。
+ *
+ * 残っているのは2区だけで、どちらも**こちらの都合ではなく公開側の状態**が理由。
+ * 「まだ作っていない」ではなく「なぜ入れられないか」を書き、選択肢からも隠さない。
+ *
+ * 以前ここに入れていた世田谷区・東村山市は、再調査の結果いずれも対応できることが分かった。
+ *   - 世田谷区：列名と中身が入れ替わっているだけで、どちらがどちらかはデータ自身が示していた
+ *   - 東村山市：案内先が死んでいたのではなく、**こちらの名乗り方が弾かれていた**だけだった
  */
 export const UNSUPPORTED_MUNICIPALITIES: UnsupportedMunicipality[] = [
   {
     code: 'shibuya',
     name: '渋谷区',
     supported: false,
-    reason: '渋谷区はごみ品目のオープンデータを公開していないため、取り込めません。',
+    reason: '渋谷区は品目ごとのオープンデータを公開していないため、取り込めません。',
     officialLinkId: 'shibuya-gomi-hinmoku',
-  },
-  {
-    code: 'setagaya',
-    name: '世田谷区',
-    supported: false,
-    reason:
-      '世田谷区の公開データは列と中身がずれており、そのまま取り込むと誤った分別区分になるため、あえて対応していません。',
-    officialLinkId: 'setagaya-gomi',
   },
   {
     code: 'taito',
     name: '台東区',
     supported: false,
-    reason: '台東区の公開データはリンクが切れており取得できないため、対応できていません。',
+    reason:
+      '台東区のオープンデータは、カタログに登録されているCSVが区のサイト側で見つからない状態です（2026-08-17 時点、新旧2本とも）。誤ったデータをお見せしないよう、対応していません。',
     officialLinkId: 'taito-gomi',
   },
 ];
@@ -79,9 +77,6 @@ export const MUNICIPALITIES: Municipality[] = [
 
 /** 東京都の区市町村数（23区＋26市＋5町＋8村）。カバー範囲を実数で書くために使う */
 export const TOKYO_MUNICIPALITY_COUNT = 62;
-
-/** docs/gomi_taiou_jichitai.json で取り込み可能と確認済みの自治体数 */
-export const SURVEYED_MUNICIPALITY_COUNT = 30;
 
 export function findMunicipality(codeOrName: string): Municipality | undefined {
   return MUNICIPALITIES.find((m) => m.code === codeOrName || m.name === codeOrName);

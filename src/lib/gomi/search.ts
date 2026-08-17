@@ -98,6 +98,19 @@ function rank(item: GomiItem, key: string): number {
   return Number.POSITIVE_INFINITY;
 }
 
+/**
+ * 料金の見せ方。
+ *
+ * 元データの料金列には「500」のような金額と、「無料」「有料」という種別の2種類がある。
+ * 種別に円を付けると「無料円」になる。金額が分からないことは、金額を作らずにそう書く。
+ */
+function feeFacts(item: GomiItem): { label: string; value: string }[] {
+  if (item.fee) return [{ label: '粗大ごみ回収料金', value: `${item.fee}円` }];
+  if (item.feeKind === '無料') return [{ label: '料金', value: '無料' }];
+  if (item.feeKind) return [{ label: '料金', value: `${item.feeKind}（金額は公式でご確認ください）` }];
+  return [];
+}
+
 export function searchGomi(query: GomiQuery): GomiSearchResult {
   const municipality = findMunicipality(query.municipality.trim());
   if (!municipality) return unknownMunicipality(query.municipality);
@@ -160,7 +173,7 @@ export function searchGomi(query: GomiQuery): GomiSearchResult {
       headline: best.c,
       icon: best.k,
       note: best.note,
-      facts: best.fee ? [{ label: '粗大ごみ回収料金', value: `${best.fee}円` }] : [],
+      facts: feeFacts(best),
     },
     provenance: provenanceOf(data),
     limitations: [
