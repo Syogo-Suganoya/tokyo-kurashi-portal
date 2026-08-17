@@ -1,24 +1,3 @@
-"""くらしの道しるべ アーキテクチャ図の生成スクリプト。
-
-技術名のみの構成図。処理フローの詳細は README とコードを参照。
-
-**この図の主張は「実行時に外へ取りに行く線が1本も無い」こと。**
-オープンデータの取り込みはビルド時（点線）に済ませ、生成した静的JSONを
-リポジトリに同梱している。住民のリクエストで動くのは Cloudflare の中だけになる。
-AIも同じ Cloudflare 上の Workers AI をバインディングで呼ぶので、APIキーが存在しない。
-
-実行:
-    brew install graphviz                                  # dot コマンド（初回のみ）
-    /opt/homebrew/bin/python3 -m pip install --break-system-packages --user diagrams
-    /opt/homebrew/bin/python3 docs/architecture.py
-
-Homebrew の python は外部管理（PEP 668）なので、そのままでは pip を拒否する。
-`--user` を付けるのは Homebrew 自身の推奨で、Homebrew の site-packages を汚さずに
-ホーム側（~/Library/Python/3.14/lib/python/site-packages）へ入れるため。
-
-出力: docs/architecture.png（生成物だが、プレゼンで使うのでコミットする）
-"""
-
 from diagrams import Cluster, Diagram, Edge
 from diagrams.generic.storage import Storage
 from diagrams.onprem.client import Users
