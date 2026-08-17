@@ -9,6 +9,7 @@
 import Link from 'next/link';
 
 import { AnswerCard } from '@/components/AnswerCard';
+import { SavedMunicipalityLinks } from '@/components/SavedMunicipalityLinks';
 import { MUNICIPALITIES } from '@/data/municipalities';
 import { searchGomi } from '@/lib/gomi/search';
 
@@ -40,7 +41,9 @@ export default async function GomiPage({ searchParams }: PageProps<'/gomi'>) {
         表示します（ごみ袋やカレンダーの表記と食い違わないようにするためです）。
       </p>
 
-      <form method="get" className="mt-8 rounded-xl border border-line bg-surface p-5">
+      <SavedMunicipalityLinks current={municipality} />
+
+      <form method="get" className="mt-5 rounded-xl border border-line bg-surface p-5">
         <div className="grid gap-4 sm:grid-cols-[minmax(0,12rem)_1fr]">
           <label className="block">
             <span className="text-sm font-semibold">お住まいの区市町村</span>

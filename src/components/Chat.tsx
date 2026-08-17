@@ -11,7 +11,9 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 import { AnswerCard } from '@/components/AnswerCard';
+import { MunicipalityPicker } from '@/components/MunicipalityPicker';
 import { MUNICIPALITIES } from '@/data/municipalities';
+import { useSavedMunicipalities } from '@/lib/use-saved-municipalities';
 import type { ChatResponse } from '@/app/api/chat/route';
 
 const EXAMPLES = [
@@ -24,17 +26,24 @@ const EXAMPLES = [
 
 type Turn = { question: string; response: ChatResponse };
 
+/** 保存はコードで持っているので、表示するときに名前へ戻す */
+function nameOfMunicipality(codeOrName: string): string {
+  return MUNICIPALITIES.find((m) => m.code === codeOrName || m.name === codeOrName)?.name ?? codeOrName;
+}
+
 export function Chat({ initialQuestion = '' }: { initialQuestion?: string }) {
   const [input, setInput] = useState('');
   const [turns, setTurns] = useState<Turn[]>([]);
   const [pending, setPending] = useState(false);
-  // 一度答えてもらった自治体はセッション中は保持し、以降は聞き返さない（設計書 §4.3）
+  // 一度答えてもらった自治体はセッション中は保持し、以降は聞き返さない（設計書 §4.3）。
+  // 端末に覚えているものがあれば、そもそも一度目から聞き返さない
   const [municipality, setMunicipality] = useState('');
+  const { saved, ready: savedReady } = useSavedMunicipalities();
   const inputRef = useRef<HTMLInputElement>(null);
   /** トップから渡された質問を一度だけ送る。開発時の再マウントで二重送信しないよう見張る */
   const sentInitial = useRef(false);
 
-  async function ask(question: string, withMunicipality = municipality) {
+  async function ask(question: string, withMunicipality = municipality || saved[0] || '') {
     if (!question.trim() || pending) return;
     setPending(true);
     setInput('');
@@ -57,14 +66,18 @@ export function Chat({ initialQuestion = '' }: { initialQuestion?: string }) {
     }
   }
 
-  // トップページのフォームから来たときは、その質問をそのまま投げる
+  /**
+   * トップページのフォームから来たときは、その質問をそのまま投げる。
+   * ただし**端末に覚えている区市町村の読み込みを待ってから**送る。
+   * 先に送ってしまうと、覚えているのに一度だけ聞き返すことになる。
+   */
   useEffect(() => {
-    if (!initialQuestion || sentInitial.current) return;
+    if (!initialQuestion || sentInitial.current || !savedReady) return;
     sentInitial.current = true;
-    void ask(initialQuestion);
+    void ask(initialQuestion, saved[0] ?? '');
     // ask は毎レンダリング作り直されるので依存に入れない。初回だけ動かすのが目的
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialQuestion]);
+  }, [initialQuestion, savedReady]);
 
   /**
    * 聞き返しに答えたら、その自治体を覚えて**元の質問文のまま**やり直す。
@@ -120,15 +133,15 @@ export function Chat({ initialQuestion = '' }: { initialQuestion?: string }) {
             </span>
           ))}
         </p>
-        {municipality && (
+        {(municipality || (savedReady && saved.length > 0)) && (
           <p className="mt-3 text-xs text-muted">
-            お住まいの区市町村を「{municipality}」として覚えています。
+            区市町村を「{nameOfMunicipality(municipality || saved[0])}」として扱っています。
             <button
               type="button"
               onClick={() => setMunicipality('')}
               className="ml-2 underline underline-offset-2 hover:no-underline"
             >
-              変更する
+              次の質問で選び直す
             </button>
           </p>
         )}
@@ -170,19 +183,7 @@ function ChatAnswer({
     return (
       <div className="rounded-xl border border-line bg-surface p-5">
         <p className="leading-relaxed">{response.message}</p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          {MUNICIPALITIES.map((m) => (
-            <button
-              key={m.code}
-              type="button"
-              onClick={() => onPickMunicipality(m.name, question)}
-              className="rounded-lg border border-line px-4 py-2 text-sm font-medium hover:border-accent"
-            >
-              {m.name}
-              {m.supported ? '' : '（未対応）'}
-            </button>
-          ))}
-        </div>
+        <MunicipalityPicker onPick={(code) => onPickMunicipality(code, question)} />
         <ViaNote via={response.via} />
       </div>
     );
