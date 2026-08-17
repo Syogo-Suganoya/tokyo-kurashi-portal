@@ -24,7 +24,20 @@
 - **ご案内するURLは、人が確認した一覧の中からしか選べない。** AIが生成したURLは表示しない
 - **出典・時点・カバー範囲・この画面でできないこと・公式への出口は、型で必須にしてある。** 書き忘れた画面はコンパイルが通らない
 - **申請・予約・申込みは代行しない。** 住民に責任が生じる行為は必ず公式の窓口へ送る
-- **AIが止まってもキーワード判定に切り替えて動き続ける。** APIキーが無くても全画面が動く
+- **AIが止まってもキーワード判定に切り替えて動き続ける。** どちらの経路で答えたかは毎回画面に出す
+
+## 構成
+
+Cloudflare Workers 1つで動く。**APIキーも外部DBも持たない。**
+
+| | |
+| :--- | :--- |
+| アプリ | Next.js 16（App Router）→ `@opennextjs/cloudflare` で Cloudflare Workers へ |
+| AI | Cloudflare Workers AI の function calling（`AI` バインディング。**鍵の受け渡しが無い**） |
+| データ | 取り込み済みの静的JSONをリポジトリに同梱。実行時に行政のサーバを叩かない |
+| 地図 | MapLibre GL JS ＋ 国土地理院タイル（登録不要） |
+
+当日に外部の都合で止まる部品を、構成の側から1つずつ外した結果こうなっている。
 
 ## 資料
 
@@ -32,7 +45,7 @@
 | :--- | :--- |
 | [設計書](docs/21_kurashi_michishirube_portal.md) | 調査・設計判断の全体。**なぜその形なのか**はここにある |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 開発の手順と約束。セットアップ・データの取り込み・図記号の足し方 |
-| [docs/DEPLOY.md](docs/DEPLOY.md) | 公開の手順（Vercel） |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | 公開の手順（Cloudflare Workers） |
 | [TODO.md](TODO.md) | 残っている作業 |
 | [提出フォーム原稿](docs/22_teishutsu_form_draft.md) | 応募内容の下書き |
 

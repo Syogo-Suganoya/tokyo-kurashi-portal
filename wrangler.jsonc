@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tokyo-kurashi-portal",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-08-17",
+  // nodejs_compat は OpenNext が必須とする。
+  // global_fetch_strictly_public は、Worker 自身への fetch を公開URL経由に揃えるためのもの
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "tokyo-kurashi-portal"
+    }
+  ],
+
+  // 困りごとチャットの分野判定に使う。**APIキーは要らない**（アカウントに紐づく）
+  "ai": {
+    "binding": "AI"
+  },
+
+  "vars": {
+    // 使うモデル。function calling に対応したものを選ぶこと
+    "WORKERS_AI_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

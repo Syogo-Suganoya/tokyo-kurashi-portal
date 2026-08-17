@@ -22,13 +22,17 @@
       "@/*": ["./src/*"]
     }
   },
+  // アプリ本体（Cloudflare Workers で動く）。`cloudflare-env.d.ts` の実行時型が効く範囲。
+  // 取り込みスクリプトは Node で動かすので tsconfig.scripts.json に分けてある
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "cloudflare-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "*.ts",
+    "*.mts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "scripts"]
 }

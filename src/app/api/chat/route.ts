@@ -58,7 +58,8 @@ export async function POST(request: Request): Promise<NextResponse<ChatResponse>
   const remembered = typeof body.municipality === 'string' ? body.municipality.trim() : '';
 
   const { routed, via, fallbackReason } = await routeQuery(message);
-  const viaLabel = via === 'gemini' ? 'Gemini' : `キーワード判定（${fallbackReason ?? '—'}）`;
+  const viaLabel =
+    via === 'workers-ai' ? 'Workers AI' : `キーワード判定（${fallbackReason ?? '—'}）`;
 
   if (routed.tool === 'search_bouhan') {
     return NextResponse.json({

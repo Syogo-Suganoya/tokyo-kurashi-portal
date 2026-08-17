@@ -14,6 +14,10 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // node_modules からコピーした maplibre のワーカー（自前のコードではない）
     "public/maplibre/**",
+    // Cloudflare 向けの生成物。自前のコードではない
+    ".open-next/**",
+    ".wrangler/**",
+    "cloudflare-env.d.ts",
   ]),
 ]);
 

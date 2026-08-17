@@ -3,21 +3,26 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "build:gomi": "tsx scripts/build-gomi.ts",
+    "build:barrierfree": "tsx scripts/build-barrierfree.ts",
     "build:bouhan": "tsx scripts/build-bouhan.ts",
     "build:data": "npm run build:gomi && npm run build:bouhan && npm run build:manabi && npm run build:barrierfree",
-    "check:data": "tsx scripts/check-freshness.ts",
+    "build:gomi": "tsx scripts/build-gomi.ts",
     "build:manabi": "tsx scripts/build-manabi.ts",
-    "predev": "node scripts/copy-map-worker.mjs",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
+    "check:data": "tsx scripts/check-freshness.ts",
+    "check:types": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "dev": "next dev",
+    "lint": "eslint",
     "prebuild": "node scripts/copy-map-worker.mjs",
-    "build:barrierfree": "tsx scripts/build-barrierfree.ts"
+    "predev": "node scripts/copy-map-worker.mjs",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "start": "next start",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
   },
   "dependencies": {
-    "@google/genai": "^2.17.1",
+    "@opennextjs/cloudflare": "^1.20.2",
     "maplibre-gl": "^6.4.0",
     "next": "16.3.1",
     "react": "19.2.8",
@@ -34,6 +39,15 @@
     "iconv-lite": "^0.7.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.123.0"
+  },
+  "allowScripts": {
+    "esbuild@0.25.4": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.28.1": true,
+    "workerd@1.20260811.1": true,
+    "fsevents@2.3.3": true,
+    "unrs-resolver@1.12.2": true
   }
 }

@@ -1,24 +1,27 @@
 /**
  * 困りごとの文 → 「どのツールをどんなパラメータで呼ぶか」の決定（設計書 §4）
  *
- * Gemini API の function calling を使う。ここが返すのはツール名と引数だけで、
+ * Cloudflare Workers AI の function calling を使う。ここが返すのはツール名と引数だけで、
  * 住民に見せる答えの本文は一切含まない。
  *
- * APIキーが無いとき・API障害時は、キーワード一致のフォールバックに落ちる（設計書 §4.4）。
- * デモ当日にAPIが不調でも画面が死なないための保険であり、
- * 「AIが落ちたら何も答えられない」構造にしないための設計でもある。
+ * **APIキーを持たない。** 推論はアプリと同じ Cloudflare 上で動き、`AI` バインディング経由で呼ぶ。
+ * 鍵を配って回る先が無いので、鍵の失効・流出でデモ当日に止まることがない。
+ *
+ * バインディングが無いとき・推論に失敗したときは、キーワード一致のフォールバックに落ちる
+ * （設計書 §4.4）。「AIが落ちたら何も答えられない」構造にしないための設計。
  */
 
-import { GoogleGenAI } from '@google/genai';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 import { MUNICIPALITIES } from '@/data/municipalities';
 import { TOKYO_MUNICIPALITIES } from '@/data/tokyo-municipalities';
 import { MANABI_KINDS } from '@/lib/manabi/search';
 import { FEATURE_KEYS, type FeatureKey, type SpotCategory } from '@/lib/barrierfree/types';
 
-import { GEMINI_TOOLS, KNOWN_TOPICS, SYSTEM_INSTRUCTION, type KnownTopic } from './tools';
+import { AI_TOOLS, KNOWN_TOPICS, SYSTEM_INSTRUCTION, type KnownTopic } from './tools';
 
-const MODEL = process.env.GEMINI_MODEL ?? 'gemini-3.6-flash';
+/** 使うモデル。wrangler.jsonc の vars で差し替えられる */
+const DEFAULT_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
 export type RoutedQuery =
   | { tool: 'search_gomi'; item: string; municipality?: string }
@@ -36,37 +39,82 @@ export type RoutedQuery =
 export type RouteOutcome = {
   routed: RoutedQuery;
   /** どちらの経路で決まったか。画面に出して、AIが落ちていることを隠さない */
-  via: 'gemini' | 'fallback';
+  via: 'workers-ai' | 'fallback';
   /** フォールバックに落ちた理由 */
   fallbackReason?: string;
 };
 
+/**
+ * Workers AI が返すツール呼び出し。**2つの形がありうる**（Cloudflare の型定義がそう宣言している）。
+ *   - 素の形     `{ name, arguments }`（arguments はオブジェクト）
+ *   - OpenAI形式 `{ function: { name, arguments } }`（arguments はJSON文字列）
+ * どちらで返ってくるかはモデル次第なので、両方を受ける。
+ */
+type RawToolCall = {
+  name?: unknown;
+  arguments?: unknown;
+  function?: { name?: unknown; arguments?: unknown };
+};
+
+/** 2つの形のどちらであっても、ツール名と引数の組に均す */
+function normalizeToolCall(call: RawToolCall): { name: string; args: Record<string, unknown> } | null {
+  const name = typeof call.name === 'string' ? call.name : call.function?.name;
+  if (typeof name !== 'string' || !name) return null;
+
+  const raw = call.arguments ?? call.function?.arguments;
+  let args: unknown = raw;
+  if (typeof raw === 'string') {
+    try {
+      args = JSON.parse(raw);
+    } catch {
+      // 引数が壊れていてもツール名は使える。パラメータ無しとして扱い、後段の検証に任せる
+      args = {};
+    }
+  }
+  return { name, args: args && typeof args === 'object' ? (args as Record<string, unknown>) : {} };
+}
+
 export async function routeQuery(message: string): Promise<RouteOutcome> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return { routed: fallbackRoute(message), via: 'fallback', fallbackReason: 'APIキー未設定' };
+  let env: CloudflareEnv;
+  try {
+    env = getCloudflareContext().env;
+  } catch {
+    // Cloudflare の外（素の Node で動かしたときなど）。バインディングは存在しない
+    return {
+      routed: fallbackRoute(message),
+      via: 'fallback',
+      fallbackReason: 'Cloudflareの外で実行中',
+    };
+  }
+
+  if (!env.AI) {
+    return { routed: fallbackRoute(message), via: 'fallback', fallbackReason: 'AIバインディング無し' };
   }
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    const interaction = await ai.interactions.create({
-      model: MODEL,
-      system_instruction: SYSTEM_INSTRUCTION,
-      input: message,
-      tools: GEMINI_TOOLS,
+    const result = await env.AI.run(env.WORKERS_AI_MODEL ?? DEFAULT_MODEL, {
+      messages: [
+        { role: 'system', content: SYSTEM_INSTRUCTION },
+        { role: 'user', content: message },
+      ],
+      tools: AI_TOOLS,
+      // 判定を揺らしたくない。同じ困りごとには同じツールが選ばれてほしい
+      temperature: 0,
     });
 
-    for (const step of interaction.steps ?? []) {
-      if (step.type !== 'function_call') continue;
-      const routed = toRoutedQuery(step.name, step.arguments);
-      if (routed) return { routed, via: 'gemini' };
+    const calls = (result as { tool_calls?: RawToolCall[] }).tool_calls ?? [];
+    for (const call of calls) {
+      const normalized = normalizeToolCall(call);
+      if (!normalized) continue;
+      const routed = toRoutedQuery(normalized.name, normalized.args);
+      if (routed) return { routed, via: 'workers-ai' };
     }
     // ツールを呼ばずに文章で返してきた場合。その文章は使わない（AIに答えさせない §4.2）
     return { routed: fallbackRoute(message), via: 'fallback', fallbackReason: 'ツールが選ばれなかった' };
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
-    console.error('[routeQuery] Gemini呼び出しに失敗:', reason);
-    return { routed: fallbackRoute(message), via: 'fallback', fallbackReason: 'API呼び出しに失敗' };
+    console.error('[routeQuery] Workers AI の呼び出しに失敗:', reason);
+    return { routed: fallbackRoute(message), via: 'fallback', fallbackReason: '推論に失敗' };
   }
 }
 

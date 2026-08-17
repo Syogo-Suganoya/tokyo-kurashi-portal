@@ -1,0 +1,12 @@
+{
+  // 取り込みスクリプト用。**Node で動く**ので、Cloudflare Workers の実行時型を読ませない。
+  //
+  // workerd の型は `Buffer` などのグローバルを自前で宣言しており、@types/node と衝突する。
+  // アプリ本体とスクリプトは動く場所が本当に違うので、型の世界も分けるのが素直。
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["scripts/**/*.ts", "scripts/**/*.mjs"],
+  "exclude": ["node_modules"]
+}

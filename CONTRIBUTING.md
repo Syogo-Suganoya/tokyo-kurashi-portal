@@ -6,31 +6,36 @@
 ## 必要なもの
 
 - Node.js 20.9 以上（Next.js 16 の要件）。開発時の実績は v26.7.0 / npm 11.19.0
-- Gemini APIキー（任意。無くても全画面が動く）
+- Cloudflare アカウント（チャットの分野判定を手元で動かすときだけ。無くても全画面が動く）
 
 ## セットアップ
 
 ```bash
 npm install
-cp .env.example .env.local   # GEMINI_API_KEY を設定する（空のままでもよい）
 npm run dev
 ```
 
-キーが無いときは、チャットの分野判定がキーワード一致のフォールバックに落ちる。
-画面には「キーワード判定（APIキー未設定）」と出る。**画面が死ぬことはない**が、判定の質は落ちる。
+**APIキーの設定は無い。** 分野判定は Cloudflare Workers AI で行い、`AI` バインディング経由で呼ぶ
+（`wrangler.jsonc` を参照）。手元の `next dev` でも `next.config.ts` の `initOpenNextCloudflareForDev()`
+がバインディングを繋ぐので、`npx wrangler login` さえ済んでいれば効く。
 
-APIキーはサーバ側（`src/app/api/chat/route.ts`）でしか読まない。
-`NEXT_PUBLIC_` の付いた変数だけがブラウザに露出するので、**APIキーにこの接頭辞を付けてはいけない**。
+繋がらないときは、分野判定がキーワード一致のフォールバックに落ちる。
+画面には「キーワード判定（理由）」と出る。**画面が死ぬことはない**が、判定の質は落ちる。
 
 ## コミット前に通すもの
 
 ```bash
 npm run lint
-npx tsc --noEmit
-npm run build
+npm run check:types
+npm run preview        # workerd で実際に動かす（http://localhost:8788）
 ```
 
-この3つが通らないものはデプロイでも落ちる。とくに `tsc` は、後述の「型で守っていること」を実際に検査している唯一の場所なので飛ばさない。
+`npm run dev` は素の Next.js で動くので、**本番と動く場所が違う**。
+バインディングやランタイムの差が絡む変更をしたら `preview` まで通す。
+
+型検査が2本に分かれているのは、アプリ（Cloudflare Workers）と取り込みスクリプト（Node）で
+実行環境が本当に違うため。workerd の型は `Buffer` などのグローバルを自前で宣言していて、
+@types/node と衝突する。`check:types` が両方をまとめて走らせる。
 
 ## リポジトリの地図
 
@@ -43,11 +48,14 @@ src/
   data/generated/       取り込み済みの静的JSON。**手で編集しない**
   lib/<画面>/search.ts  検索の純関数。AI tool use の実体でもある
   lib/<画面>/types.ts   その画面のデータ型と、データ特有の注意書き
-  lib/ai/               ツール定義と分野判定
+  lib/ai/               ツール定義と分野判定（Workers AI）
   app/                  画面（/gomi /bouhan /manabi /barrierfree /chat）
 scripts/                取り込みスクリプトと検証
 assets/                 OGP画像・アイコンのSVG原本
 docs/                   設計書・提出フォーム原稿・デプロイ手順
+wrangler.jsonc          Worker名・AIバインディング・使うモデル
+open-next.config.ts     Next.js を Workers に載せるための設定
+cloudflare-env.d.ts     **生成物**。`npm run cf-typegen` で作り直してコミットする
 ```
 
 `src/lib/*/types.ts` には、**実データを検証して分かった地雷**がコメントで残してある。
@@ -64,6 +72,7 @@ docs/                   設計書・提出フォーム原稿・デプロイ手�
 | 公式への出口が無い画面を作れない | `escalations: NonEmpty<Escalation>` |
 | 実在しない案内先URLを画面に出せない | `LinkId` はキュレーションDBのキーから生成した union |
 | 存在しない図記号を指定できない | `GlyphName` は名前の union |
+| AIが知らない施設区分・設備キーを渡せない | ツール定義の `enum` を取り込み済みデータから生成している |
 
 **これらを緩める変更をするときは、設計書 §3 と §4.2 を読んでからにする。**
 行政情報を扱うサービスとして、ここが緩むと全体の主張が成り立たなくなる。
@@ -75,6 +84,22 @@ docs/                   設計書・提出フォーム原稿・デプロイ手�
 - **申請・予約・申込みは代行しない。** 住民に責任が生じる行為は必ず公式の窓口へ送る
 - **「なし」と断定しない。** 元データが空欄なのは「無い」ではなく「書かれていない」。3値で持つ（`src/lib/barrierfree/types.ts`）
 - **絵文字を画面に出さない。** 端末ごとに絵柄も線の太さも変わる。図記号は `components/Pictogram.tsx` に足す
+- **AIの出力をそのまま信じない。** ツール名も引数も `toRoutedQuery` で絞り込んでから使う（`src/lib/ai/route-query.ts`）
+
+## AI（Workers AI）
+
+分野判定は `src/lib/ai/route-query.ts`。AIがやるのは**どのツールをどんな引数で呼ぶか**の決定だけで、
+住民に見せる文章は1文字も作らせない。
+
+- モデルは `wrangler.jsonc` の `vars.WORKERS_AI_MODEL`。**function calling に対応したものを選ぶ**
+- Workers AI のツール呼び出しは**2つの形で返りうる**（素の `{name, arguments}` と OpenAI形式の
+  `{function: {name, arguments}}`、後者の引数はJSON文字列）。`normalizeToolCall` が両方を受ける
+- 判定を揺らしたくないので `temperature: 0` で呼ぶ
+- 繋がらない・ツールが選ばれない・引数が壊れている、のどれでもキーワード判定へ落ちる。
+  **どの経路で答えたかは必ず画面に出す。** AIが落ちていることを隠さない（設計書 §4.4）
+
+モデルは入力の言葉を書き換えてくることがある（「西新宿７丁目」→「西新宿七丁目」など）。
+**プロンプトで頼むだけにせず、検索側で受け止める**（`src/lib/text.ts` の漢数字の畳み込み）。
 
 ## データの取り込み
 
@@ -142,6 +167,15 @@ node scripts/build-og-image.mjs
 フォントを取りに行く処理をビルドに足すと「ビルド時に外部へ取りに行かない」という他の作りと食い違うため。
 
 文字は実行環境のフォント（ヒラギノ）で描かれるので、**作り直したら出来上がりを目で見る**。
+
+## `wrangler.jsonc` を変えたら
+
+```bash
+npm run cf-typegen     # cloudflare-env.d.ts を作り直す
+```
+
+バインディングや `vars` を足したのに型が付かないときは、これを忘れている。
+生成された `cloudflare-env.d.ts` は**コミットする**（無いと型検査が通らない）。
 
 ## まだ無いもの
 

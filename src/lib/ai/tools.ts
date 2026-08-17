@@ -117,14 +117,39 @@ export const SYSTEM_INSTRUCTION = `あなたは東京都の生活情報ポータ
 - 品目名は住民が書いたままの言葉を item に入れます（「ペットボトル」「アイロン台」など）。
 - 区市町村が文中に無ければ municipality は省略します。推測してはいけません。
 - 治安・犯罪の件数・引っ越し先の比較に関する質問なら search_bouhan を呼びます。
+- 地名は住民が書いたままの文字で area に入れます。数字を漢数字に直したり、逆に直したりしてはいけません（「西新宿７丁目」はそのまま「西新宿７丁目」）。
 - 図書館・博物館・公民館・青少年施設など、学びや体験ができる場所を探す質問なら search_manabi を呼びます。
 - 車椅子・バリアフリー・オストメイトなど、行ける場所の設備に関する質問なら search_barrierfree を呼びます。
 - 上記のいずれでもない分野は no_tool を呼び、topic に最も近い分野を選びます。`;
 
-/** @google/genai の interactions API に渡すツール宣言 */
-export const GEMINI_TOOLS = [
+/**
+ * Workers AI に渡すツール宣言。
+ *
+ * Workers AI は `{ name, description, parameters }` の形をそのまま受け取る
+ * （OpenAI形式の `{ type: 'function', function: {...} }` も通るが、素の形の方が短い）。
+ * `parameters` は JSON Schema なので、`enum` に**こちらが持っている値だけ**を並べておく。
+ * 施設区分も設備キーも取り込んだデータから生成しているので、AIが知らない区分名を作る余地が無い。
+ */
+type ToolParameter = {
+  type: string;
+  description: string;
+  /** 取りうる値を閉じた列挙にする。ここが空だとAIが知らない区分名を作れてしまう */
+  enum?: readonly string[];
+  items?: { type: string; enum?: readonly string[] };
+};
+
+export type AiTool = {
+  name: string;
+  description: string;
+  parameters: {
+    type: 'object';
+    properties: Record<string, ToolParameter>;
+    required?: string[];
+  };
+};
+
+export const AI_TOOLS: AiTool[] = [
   {
-    type: 'function' as const,
     name: 'search_gomi',
     description:
       'ごみの分別・捨て方・粗大ごみについて、東京都のオープンデータから調べる。答えの本文はこのツールが返す。',
@@ -145,7 +170,6 @@ export const GEMINI_TOOLS = [
     },
   },
   {
-    type: 'function' as const,
     name: 'search_bouhan',
     description:
       '町丁ごとの犯罪認知件数を、警視庁のオープンデータから調べる。答えの本文はこのツールが返す。治安の良し悪しを判定するものではない。',
@@ -161,7 +185,6 @@ export const GEMINI_TOOLS = [
     },
   },
   {
-    type: 'function' as const,
     name: 'search_manabi',
     description:
       '図書館・博物館・公民館・青少年施設など、東京都内の社会教育施設を探す。答えの本文はこのツールが返す。',
@@ -185,7 +208,6 @@ export const GEMINI_TOOLS = [
     },
   },
   {
-    type: 'function' as const,
     name: 'search_barrierfree',
     description:
       '車椅子で行ける飲食店・鉄道駅・公共施設を、必要な設備の条件で探す。答えの本文はこのツールが返す。',
@@ -208,7 +230,6 @@ export const GEMINI_TOOLS = [
     },
   },
   {
-    type: 'function' as const,
     name: 'no_tool',
     description:
       'ごみ分別以外の分野。自前の簡易版が無いため、既存の公式サービスを案内する。',

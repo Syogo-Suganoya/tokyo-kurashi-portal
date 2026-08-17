@@ -251,7 +251,7 @@ function ChatAnswer({
   );
 }
 
-/** どの経路で判定したかを隠さない。Geminiが落ちていればそう表示される */
+/** どの経路で判定したかを隠さない。Workers AI が落ちていればそう表示される */
 function ViaNote({ via }: { via: string }) {
   return (
     <p className="mt-2 text-xs text-muted">
