@@ -99,6 +99,51 @@ function rank(item: GomiItem, key: string): number {
 }
 
 /**
+ * 住民が書いた文そのものから、その自治体に実在する品目名を拾い直す。
+ *
+ * **AIが品目名を書き換えることがあるため。** 実測で「アイロン台を捨てたい」の品目が
+ * 「アイロン**天**」になり、0件になった。町丁名で起きたのと同じ壊れ方で、
+ * 漢数字のような規則的なずれではないので正規化では吸収できない。
+ *
+ * 取り込み済みの品目名を文の中から探すので、**当たれば必ず実在する品目**になる。
+ * 1文字の品目（「本」「傘」）は文中に偶然現れるため対象外。長いものを優先する。
+ */
+export function itemFromText(text: string, municipality: string): string | undefined {
+  const found = findMunicipality(municipality.trim());
+  if (!found?.supported) return undefined;
+  const data = getDataset(found.code);
+  if (!data) return undefined;
+
+  const haystack = normalizeSearchKey(text);
+  if (!haystack) return undefined;
+
+  /*
+   * 照合には品目名だけを使う。検索キー（`s`）は品目名とカナを繋いだものなので、
+   * カナ列を持つ自治体では「ぺっとぼとるぺっとぼとる」のような形になり、文中に現れない。
+   */
+  let best: { name: string; key: string } | undefined;
+  for (const item of data.items) {
+    for (const key of matchKeys(item.n)) {
+      if (key.length < 2 || !haystack.includes(key)) continue;
+      if (!best || key.length > best.key.length) best = { name: item.n, key };
+    }
+  }
+  return best?.name;
+}
+
+/**
+ * 品目名から照合用の候補を作る。
+ *
+ * 公式の品目名は括弧で補足を足した形が多く（「飲料容器（ペットボトル）」「乾電池（拠点回収）」）、
+ * 住民は括弧の外だけ・中だけを書く。**丸ごとの一致しか見ないと、その両方を取り逃がす。**
+ */
+function matchKeys(name: string): string[] {
+  const outside = name.replace(/[（(][^）)]*[）)]/g, '');
+  const inside = [...name.matchAll(/[（(]([^）)]*)[）)]/g)].map((m) => m[1]);
+  return [name, outside, ...inside].map(normalizeSearchKey);
+}
+
+/**
  * 料金の見せ方。
  *
  * 元データの料金列には「500」のような金額と、「無料」「有料」という種別の2種類がある。

@@ -40,8 +40,18 @@ export function Chat({ initialQuestion = '' }: { initialQuestion?: string }) {
   const [municipality, setMunicipality] = useState('');
   const { saved, ready: savedReady } = useSavedMunicipalities();
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   /** トップから渡された質問を一度だけ送る。開発時の再マウントで二重送信しないよう見張る */
   const sentInitial = useRef(false);
+
+  /**
+   * 新しい答えが増えたら末尾まで送る。
+   * 入力欄が下端に固定されている以上、**答えは入力欄のすぐ上に出ていないと見えない**。
+   */
+  useEffect(() => {
+    const box = scrollRef.current;
+    if (box) box.scrollTop = box.scrollHeight;
+  }, [turns.length, pending]);
 
   async function ask(question: string, withMunicipality = municipality || saved[0] || '') {
     if (!question.trim() || pending) return;
@@ -90,25 +100,73 @@ export function Chat({ initialQuestion = '' }: { initialQuestion?: string }) {
   }
 
   return (
-    <div>
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* やり取りだけがスクロールする。入力欄は下端に置いたまま動かさない */}
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pb-4">
+        {turns.length === 0 ? (
+          <div className="rounded-xl border border-line bg-surface p-5">
+            <p className="leading-relaxed">
+              思いついたままの言葉で大丈夫です。答えを持っていればその場でお答えし、
+              持っていなければ、それを扱っている公式のサービスをご案内します。
+            </p>
+            <p className="mt-4 text-sm font-semibold">たとえば</p>
+            <ul className="mt-2 flex flex-wrap gap-2">
+              {EXAMPLES.map((example) => (
+                <li key={example}>
+                  <button
+                    type="button"
+                    onClick={() => void ask(example)}
+                    className="rounded-full border border-line px-3 py-1.5 text-sm hover:border-accent hover:text-accent"
+                  >
+                    {example}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {turns.map((turn, index) => (
+              <section key={`${turn.question}-${index}`}>
+                <p className="ml-auto w-fit max-w-[85%] rounded-lg bg-accent-soft px-4 py-2 text-sm font-medium">
+                  {turn.question}
+                </p>
+                <div className="mt-3">
+                  <ChatAnswer
+                    response={turn.response}
+                    question={turn.question}
+                    onPickMunicipality={answerMunicipality}
+                  />
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
+        {pending && (
+          <p className="mt-4 text-sm text-muted" role="status">
+            考え中…
+          </p>
+        )}
+      </div>
+
       <form
         onSubmit={(event) => {
           event.preventDefault();
           void ask(input);
         }}
-        className="rounded-xl border border-line bg-surface p-5"
+        className="shrink-0 border-t border-line bg-background pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
       >
-        <label className="block text-sm font-semibold" htmlFor="chat-input">
+        <label className="sr-only" htmlFor="chat-input">
           困りごとを書いてください
         </label>
-        <div className="mt-2 flex gap-2">
+        <div className="flex gap-2">
           <input
             id="chat-input"
             ref={inputRef}
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="ペットボトルってどう捨てるの？"
-            className="min-w-0 flex-1 rounded-lg border border-line bg-background px-3 py-2"
+            className="min-w-0 flex-1 rounded-lg border border-line bg-surface px-3 py-2"
           />
           <button
             type="submit"
@@ -118,23 +176,8 @@ export function Chat({ initialQuestion = '' }: { initialQuestion?: string }) {
             {pending ? '考え中…' : '聞く'}
           </button>
         </div>
-        <p className="mt-3 text-sm text-muted">
-          例：
-          {EXAMPLES.map((example, index) => (
-            <span key={example}>
-              {index > 0 && '、'}
-              <button
-                type="button"
-                onClick={() => void ask(example)}
-                className="underline underline-offset-2 hover:no-underline"
-              >
-                {example}
-              </button>
-            </span>
-          ))}
-        </p>
         {(municipality || (savedReady && saved.length > 0)) && (
-          <p className="mt-3 text-xs text-muted">
+          <p className="mt-2 text-xs text-muted">
             区市町村を「{nameOfMunicipality(municipality || saved[0])}」として扱っています。
             <button
               type="button"
@@ -146,21 +189,6 @@ export function Chat({ initialQuestion = '' }: { initialQuestion?: string }) {
           </p>
         )}
       </form>
-
-      <div className="mt-6 space-y-6">
-        {turns.map((turn, index) => (
-          <section key={`${turn.question}-${index}`}>
-            <p className="rounded-lg bg-surface px-4 py-2 text-sm font-medium">{turn.question}</p>
-            <div className="mt-3">
-              <ChatAnswer
-                response={turn.response}
-                question={turn.question}
-                onPickMunicipality={answerMunicipality}
-              />
-            </div>
-          </section>
-        ))}
-      </div>
     </div>
   );
 }

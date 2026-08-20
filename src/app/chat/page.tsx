@@ -18,22 +18,23 @@ export default async function ChatPage({ searchParams }: PageProps<'/chat'>) {
   const params = await searchParams;
   const initialQuestion = typeof params.q === 'string' ? params.q : '';
 
+  /*
+   * 入力欄を画面の下端に置くため、この画面だけ**高さを使い切る作り**にする。
+   * ページ全体がスクロールすると入力欄も一緒に流れてしまうので、
+   * スクロールするのはやり取りの部分だけにして、見出しと入力欄は動かさない。
+   */
   return (
-    <main className="mx-auto w-full max-w-3xl px-5 py-10">
-      <p className="text-sm">
-        <Link href="/" className="text-muted underline underline-offset-2 hover:no-underline">
-          くらしの道しるべ
-        </Link>
-      </p>
-      <h1 className="signboard mt-2 text-3xl">困りごとを聞く</h1>
-      <p className="mt-3 max-w-2xl leading-relaxed text-muted">
-        思いついたままの言葉で大丈夫です。答えを持っていればその場でお答えし、
-        持っていなければ、それを扱っている公式のサービスをご案内します。
-      </p>
+    <main className="mx-auto flex h-dvh w-full max-w-3xl flex-col px-5">
+      <header className="shrink-0 pt-6 pb-4">
+        <p className="text-sm">
+          <Link href="/" className="text-muted underline underline-offset-2 hover:no-underline">
+            くらしの道しるべ
+          </Link>
+        </p>
+        <h1 className="signboard mt-1 text-2xl">困りごとを聞く</h1>
+      </header>
 
-      <div className="mt-8">
-        <Chat initialQuestion={initialQuestion} />
-      </div>
+      <Chat initialQuestion={initialQuestion} />
     </main>
   );
 }

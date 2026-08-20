@@ -7,14 +7,13 @@ const DESCRIPTION =
 
 /**
  * 共有カードの画像は絶対URLでないと読まれないため、置き場所を明示する。
- * Vercel は本番ドメインを環境変数で渡してくるので、それを使う。
- * 手元では localhost になるが、手元のURLを共有することはないので実害はない。
+ *
+ * Cloudflare Workers には「自分の公開URL」を教えてくれる環境変数が無いので、
+ * 公開先を直に書く。**ここが古いと共有カードの画像だけが出なくなる**
+ * （リンクは正しいのに画像が欠ける、という気づきにくい壊れ方をする）。
  */
 const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL
-    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-    : 'http://localhost:3000');
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://tokyo-kurashi-portal.tokyo-odh-039.workers.dev';
 
 /**
  * 画像そのものは `opengraph-image.png`（説明文は `opengraph-image.alt.txt`）を

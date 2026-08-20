@@ -92,14 +92,26 @@ export async function routeQuery(message: string): Promise<RouteOutcome> {
   }
 
   try {
-    const result = await env.AI.run(env.WORKERS_AI_MODEL ?? DEFAULT_MODEL, {
-      messages: [
-        { role: 'system', content: SYSTEM_INSTRUCTION },
-        { role: 'user', content: message },
-      ],
-      tools: AI_TOOLS,
-      // 判定を揺らしたくない。同じ困りごとには同じツールが選ばれてほしい
-      temperature: 0,
+    /*
+     * 1度だけ即座にやり直す。
+     * Workers AI は時々「3044: Unknown internal error」を返す（実測。同じ文で連続10回中1回）。
+     * こちらの入力の問題ではないので、投げ直すと通る。落ちたままにするとキーワード判定に
+     * 落ちてしまい、住民には**AIが使えない画面**として見える。
+     */
+    const run = () =>
+      env.AI.run(env.WORKERS_AI_MODEL ?? DEFAULT_MODEL, {
+        messages: [
+          { role: 'system', content: SYSTEM_INSTRUCTION },
+          { role: 'user', content: message },
+        ],
+        tools: AI_TOOLS,
+        // 判定を揺らしたくない。同じ困りごとには同じツールが選ばれてほしい
+        temperature: 0,
+      });
+
+    const result = await run().catch((err: unknown) => {
+      console.warn('[routeQuery] Workers AI が失敗したのでもう一度だけ試す:', err);
+      return run();
     });
 
     const calls = (result as { tool_calls?: RawToolCall[] }).tool_calls ?? [];

@@ -1,7 +1,7 @@
 # くらしの道しるべ — Cloudflare Workers への CD
 #
 # main への push で本番デプロイ。PR ではビルドまで（デプロイしない）。
-# 必要な GitHub Secrets は docs/DEPLOY.md「手順3」を参照。
+# 渡す秘密の値は GitHub Secrets の CLOUDFLARE_API_TOKEN 1つだけ。
 name: Deploy to Cloudflare Workers
 
 on:
@@ -55,7 +55,7 @@ jobs:
       - name: Check map worker is bundled
         run: |
           if [ ! -f .open-next/assets/maplibre/maplibre-gl-worker.mjs ]; then
-            echo "::error::MapLibre のワーカーが .open-next/assets/maplibre/ にありません。prebuild（scripts/copy-map-worker.mjs）が走っているか確認してください（docs/DEPLOY.md）。"
+            echo "::error::MapLibre のワーカーが .open-next/assets/maplibre/ にありません。prebuild（scripts/copy-map-worker.mjs）が走っているか確認してください。"
             exit 1
           fi
 
@@ -64,7 +64,11 @@ jobs:
     needs: build
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    environment: production
+    # url を書いておくと、GitHub の Deployments と PR/コミットの画面に
+    # 「View deployment」として公開URLが出る。ここが唯一の公開先
+    environment:
+      name: production
+      url: https://tokyo-kurashi-portal.tokyo-odh-039.workers.dev/
     steps:
       - uses: actions/checkout@v4
 
@@ -83,7 +87,7 @@ jobs:
       - name: Check account id
         run: |
           if [ "${CLOUDFLARE_ACCOUNT_ID}" = "REPLACE_WITH_ACCOUNT_ID" ]; then
-            echo "::error::.github/workflows/deploy.yml の CLOUDFLARE_ACCOUNT_ID がプレースホルダのままです（docs/DEPLOY.md 手順3）。"
+            echo "::error::.github/workflows/deploy.yml の CLOUDFLARE_ACCOUNT_ID がプレースホルダのままです。"
             exit 1
           fi
 

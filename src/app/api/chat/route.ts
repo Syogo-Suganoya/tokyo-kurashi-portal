@@ -15,7 +15,7 @@ import { getLink, type LinkId } from '@/data/links';
 import { routeQuery, townFromText } from '@/lib/ai/route-query';
 import { TOPIC_LINKS } from '@/lib/ai/tools';
 import { searchBouhan, type BouhanSearchResult } from '@/lib/bouhan/search';
-import { searchGomi, type GomiSearchResult } from '@/lib/gomi/search';
+import { itemFromText, searchGomi, type GomiSearchResult } from '@/lib/gomi/search';
 import { searchManabi, type ManabiSearchResult } from '@/lib/manabi/search';
 import { searchBarrierFree, type BarrierFreeSearchResult } from '@/lib/barrierfree/search';
 
@@ -131,12 +131,29 @@ export async function POST(request: Request): Promise<NextResponse<ChatResponse>
     });
   }
 
+  /*
+   * 地名と同じで、品目名もAIが書き換えてくる（「アイロン台」→「アイロン天」を実測）。
+   * 引けなかったら住民が書いた文から品目名を拾い直す。拾えるのは実在する品目だけ。
+   */
+  let item = routed.item;
+  let result = searchGomi({ item, municipality });
+  if (result.answer === null) {
+    const fromText = itemFromText(message, municipality);
+    if (fromText && fromText !== item) {
+      const retried = searchGomi({ item: fromText, municipality });
+      if (retried.answer !== null) {
+        item = fromText;
+        result = retried;
+      }
+    }
+  }
+
   return NextResponse.json({
     type: 'answer',
     via: viaLabel,
-    item: routed.item,
+    item,
     municipality,
     // 答えの本文はここで作られる。AIは一切関与しない（設計書 §4.2）
-    result: searchGomi({ item: routed.item, municipality }),
+    result,
   });
 }

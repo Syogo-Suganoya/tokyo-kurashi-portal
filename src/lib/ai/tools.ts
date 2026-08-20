@@ -237,9 +237,28 @@ export const AI_TOOLS: AiTool[] = [
       type: 'object',
       properties: {
         topic: {
+          /*
+           * 分野名だけを並べても、モデルは `kenko` と `kikou` のような近い綴りを取り違える。
+           * 実測で「近くのAEDを探したい」が `kikou`（気候変動）になり、
+           * 涼める場所の地図を案内していた。**それぞれが何を指すかをここに書く。**
+           */
           type: 'string',
           enum: [...KNOWN_TOPICS],
-          description: '困りごとに最も近い分野',
+          description:
+            '困りごとに最も近い分野。' +
+            'bousai=防災・地震・台風・避難／' +
+            'bouhan=防犯・治安・犯罪／' +
+            'kenko=健康・医療・病院・救急・AED・こころの相談／' +
+            'kikou=気候変動・熱中症・暑さ対策・涼める場所／' +
+            'seikatsu=暮らしの支援制度・手当・給付／' +
+            'zeikin=税金の使い道・都の予算／' +
+            'shakai=ボランティア・地域活動／' +
+            'kodomo=子育て・保育・若者の相談／' +
+            'fukushi=福祉・こども食堂／' +
+            'digital=電子申請・マイナンバー・都のアプリ／' +
+            'kotsu=交通・乗り換え・鉄道・バス／' +
+            'kanko=観光・お出かけ／' +
+            'other=どれにも当てはまらない',
         },
       },
       required: ['topic'],

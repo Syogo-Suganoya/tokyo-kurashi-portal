@@ -43,13 +43,8 @@ Cloudflare Workers 1つで動く。**APIキーも外部DBも持たない。**
 
 | | |
 | :--- | :--- |
-| [設計書](_memo/原案.md) | 調査・設計判断の全体。**なぜその形なのか**はここにある |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | 開発の手順と約束。セットアップ・データの取り込み・図記号の足し方 |
-| [_memo/DEPLOY.md](_memo/DEPLOY.md) | 公開の手順（Cloudflare Workers） |
 | [TODO.md](TODO.md) | 残っている作業 |
-| [提出フォーム下書き](_memo/提出フォーム下書き.md) | 応募内容の下書き |
-| [プレゼン原稿](_memo/プレゼン原稿.md) | First Stage 2分間プレゼンの読み上げ原稿と配色 |
-| [デモ用入力値](_memo/デモ用入力値.md) | 確実にヒットする入力と、外れる条件（実測） |
 | [構成図](docs/architecture.png) | 技術スタック（生成元は [architecture.py](docs/architecture.py)） |
 
 ## 出典
