@@ -74,6 +74,26 @@ function normalizeToolCall(call: RawToolCall): { name: string; args: Record<stri
   return { name, args: args && typeof args === 'object' ? (args as Record<string, unknown>) : {} };
 }
 
+/**
+ * 応答からツール呼び出しの配列を取り出す。
+ *
+ * **置き場所もモデルによって違う。** 多くは応答の直下に `tool_calls` を置くが、
+ * OpenAI互換の形（`@cf/openai/gpt-oss-120b` で実測）は `choices[].message.tool_calls` に置く。
+ * 直下しか見ないと、**モデルは正しく選べているのにキーワード判定へ落ちる**。
+ */
+function toolCallsOf(result: unknown): RawToolCall[] {
+  const r = (result ?? {}) as {
+    tool_calls?: RawToolCall[];
+    choices?: { message?: { tool_calls?: RawToolCall[] } }[];
+  };
+  if (r.tool_calls?.length) return r.tool_calls;
+  for (const choice of r.choices ?? []) {
+    const calls = choice.message?.tool_calls;
+    if (calls?.length) return calls;
+  }
+  return [];
+}
+
 export async function routeQuery(message: string): Promise<RouteOutcome> {
   let env: CloudflareEnv;
   try {
@@ -114,7 +134,7 @@ export async function routeQuery(message: string): Promise<RouteOutcome> {
       return run();
     });
 
-    const calls = (result as { tool_calls?: RawToolCall[] }).tool_calls ?? [];
+    const calls = toolCallsOf(result);
     for (const call of calls) {
       const normalized = normalizeToolCall(call);
       if (!normalized) continue;

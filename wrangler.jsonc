@@ -29,8 +29,20 @@
   },
 
   "vars": {
-    // 使うモデル。function calling に対応したものを選ぶこと
-    "WORKERS_AI_MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+    /*
+     * 使うモデル。function calling に対応したものを選ぶこと。
+     *
+     * 実測で選んだ（本番と同じツール定義・同じ system・10問・3試行）。
+     *   qwen3-30b-a3b-fp8            10/10 ・ 約2.3秒  ← これ
+     *   deepseek-v4-flash-0731       10/10 ・ 約3.7秒
+     *   llama-3.3-70b-instruct（前） 9/10 ・ 約3.4秒
+     *   gpt-oss-120b                 10/10 ・ 約6.3秒
+     *   llama-4-scout-17b            6/10  ・ 約1.3秒
+     *
+     * 前のモデルは**3試行とも**「西新宿７丁目」を書き換えた（七丁部・七野・七金目）。
+     * qwen3 は書き換えなかった。速さも2/3になる。
+     */
+    "WORKERS_AI_MODEL": "@cf/qwen/qwen3-30b-a3b-fp8"
   },
 
   "observability": {

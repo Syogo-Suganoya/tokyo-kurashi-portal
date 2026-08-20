@@ -27,6 +27,7 @@ npm run dev
 ```bash
 npm run lint
 npm run check:types
+npm test               # 検索の純関数（実データで引く）
 npm run preview        # workerd で実際に動かす（http://localhost:8788）
 ```
 
@@ -95,18 +96,28 @@ cloudflare-env.d.ts     **生成物**。`npm run cf-typegen` で作り直して�
 分野判定は `src/lib/ai/route-query.ts`。AIがやるのは**どのツールをどんな引数で呼ぶか**の決定だけで、
 住民に見せる文章は1文字も作らせない。
 
-- モデルは `wrangler.jsonc` の `vars.WORKERS_AI_MODEL`。**function calling に対応したものを選ぶ**
-- Workers AI のツール呼び出しは**2つの形で返りうる**（素の `{name, arguments}` と OpenAI形式の
-  `{function: {name, arguments}}`、後者の引数はJSON文字列）。`normalizeToolCall` が両方を受ける
+- モデルは `wrangler.jsonc` の `vars.WORKERS_AI_MODEL`。**function calling に対応したものを選ぶ**。
+  対応していても**まともに選べないモデルがある**（`llama-4-scout` は10問中6問）ので、替えるなら実測する
+- ツール呼び出しは**形も置き場所もモデルによって違う**。`normalizeToolCall` が形を、`toolCallsOf` が
+  置き場所を吸収する
+  - 素の `{name, arguments}` ／ OpenAI形式 `{function: {name, arguments}}`（引数はJSON文字列）
+  - 応答の直下 `tool_calls` ／ OpenAI互換の `choices[].message.tool_calls`（`gpt-oss-120b` で実測）
+- 失敗したら1度だけ投げ直す。Workers AI は時々「3044: Unknown internal error」を返す
 - 判定を揺らしたくないので `temperature: 0` で呼ぶ
 - 繋がらない・ツールが選ばれない・引数が壊れている、のどれでもキーワード判定へ落ちる。
   **どの経路で答えたかは必ず画面に出す。** AIが落ちていることを隠さない
 
-モデルは入力の言葉を書き換えてくる（「西新宿７丁目」→「西新宿七丁目」、さらに「七丁**部**」まで実測）。
-**プロンプトで頼むだけにせず、受け取る側で吸収する。** 2段構えにしてある。
+**モデルは入力の言葉を書き換えてくる。** 地名も品目名も書き換わる。
+実測したもの：「西新宿７丁目」→「七丁目」「七丁**部**」「七野」「七金目」、「アイロン台」→「アイロン**天**」。
+プロンプトで禁じても直らないので、受け取る側で吸収する。
 
-1. `src/lib/text.ts` … 漢数字の丁目を数字に畳む（「七丁目」→「7丁目」）
-2. `src/app/api/chat/route.ts` … それでも0件なら `townFromText` で住民の文から取り直して引き直す
+1. `src/lib/text.ts` … 漢数字の丁目を数字に畳む（「七丁目」→「7丁目」）。規則的なずれはここで消える
+2. `src/app/api/chat/route.ts` … それでも0件なら、**住民が書いた文から取り直して引き直す**
+   （`townFromText` ／ `itemFromText`）。別の語に化けたものはここで拾う
+
+モデル選びでも効く。`@cf/qwen/qwen3-30b-a3b-fp8` は3試行とも書き換えなかったが、
+前に使っていた `@cf/meta/llama-3.3-70b-instruct-fp8-fast` は**3試行とも**書き換えた。
+それでも取り直しの経路は残す。次のモデルが同じとは限らない。
 
 ## データの取り込み
 
@@ -188,9 +199,20 @@ npm run cf-typegen     # cloudflare-env.d.ts を作り直す
 `.open-next/worker` を指す形になり、ビルド前に型検査を走らせる場面（CIのビルドジョブ）で
 参照先が無くて落ちる。`rm -rf .open-next` してから生成する。
 
+## テスト
+
+```bash
+npm test               # tsx --test。CIのビルドジョブでも走る
+```
+
+`src/lib/search.test.ts` に検索の純関数のテストがある。**取り込み済みの実データをそのまま使う。**
+作り物のデータでは「公式の品目名が `飲料容器（ペットボトル）` である」ような現実の形を検証できない。
+
+見ているのは、壊れても例外が出ずに**静かに0件になる**ところ。部分一致・かな検索・3値の扱い・
+漢数字の丁目・AIが言葉を書き換えたときの取り直し、そして**共通画面契約が常に埋まっていること**。
+
 ## まだ無いもの
 
-- 検索の純関数（`searchGomi` / `searchBouhan` / `searchManabi` / `searchBarrierFree`）の自動テスト。取り込み側の検証は手厚いが、**検索側は手で叩いて確認しているだけ**
 - キーボード操作・スクリーンリーダーでの確認
 
 残っている作業は [TODO.md](TODO.md) にある。

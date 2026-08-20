@@ -19,6 +19,7 @@
     "predev": "node scripts/copy-map-worker.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "start": "next start",
+    "test": "tsx --test \"src/**/*.test.ts\"",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload"
   },
   "dependencies": {

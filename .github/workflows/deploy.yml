@@ -45,6 +45,10 @@ jobs:
       - name: Typecheck
         run: npm run check:types
 
+      # 検索の純関数は壊れても例外が出ない（0件になるだけ）。ここで止める
+      - name: Test
+        run: npm test
+
       # opennextjs-cloudflare build は内部で npm run build を呼ぶので、
       # prebuild（MapLibre ワーカーの配置）もここで走る
       - name: Build (OpenNext)
