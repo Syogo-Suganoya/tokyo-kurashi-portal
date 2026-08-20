@@ -20,7 +20,7 @@ concurrency:
 env:
   # Cloudflare アカウントID。秘匿情報ではないのでワークフローに直書きする。
   # ダッシュボード右下、または `npx wrangler whoami` で確認できる。
-  CLOUDFLARE_ACCOUNT_ID: REPLACE_WITH_ACCOUNT_ID
+  CLOUDFLARE_ACCOUNT_ID: a128e75b7210f99f780cccff2c2cf5ab
 
 jobs:
   build:
