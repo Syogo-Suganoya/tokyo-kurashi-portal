@@ -12,7 +12,7 @@
 import { NextResponse } from 'next/server';
 
 import { getLink, type LinkId } from '@/data/links';
-import { routeQuery } from '@/lib/ai/route-query';
+import { routeQuery, townFromText } from '@/lib/ai/route-query';
 import { TOPIC_LINKS } from '@/lib/ai/tools';
 import { searchBouhan, type BouhanSearchResult } from '@/lib/bouhan/search';
 import { searchGomi, type GomiSearchResult } from '@/lib/gomi/search';
@@ -62,12 +62,24 @@ export async function POST(request: Request): Promise<NextResponse<ChatResponse>
     via === 'workers-ai' ? 'Workers AI' : `キーワード判定（${fallbackReason ?? '—'}）`;
 
   if (routed.tool === 'search_bouhan') {
-    return NextResponse.json({
-      type: 'bouhan',
-      via: viaLabel,
-      area: routed.area,
-      result: searchBouhan({ area: routed.area }),
-    });
+    /*
+     * AIが渡してきた地名で引けなかったら、住民が書いた文から取り直す。
+     * モデルは地名を書き換えてくる（「西新宿７丁目」→「西新宿七丁部」を実測）。
+     * 書き換えた側だけを信じると、住民が正しく書いた町丁が0件になる。
+     */
+    let area = routed.area;
+    let result = searchBouhan({ area });
+    if (result.answer === null) {
+      const fromText = townFromText(message);
+      if (fromText && fromText !== area) {
+        const retried = searchBouhan({ area: fromText });
+        if (retried.answer !== null) {
+          area = fromText;
+          result = retried;
+        }
+      }
+    }
+    return NextResponse.json({ type: 'bouhan', via: viaLabel, area, result });
   }
 
   if (routed.tool === 'search_manabi') {

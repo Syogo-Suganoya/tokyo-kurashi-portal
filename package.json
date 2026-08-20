@@ -11,7 +11,7 @@
     "build:manabi": "tsx scripts/build-manabi.ts",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "check:data": "tsx scripts/check-freshness.ts",
-    "check:types": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "check:types": "next typegen && tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "dev": "next dev",
     "lint": "eslint",

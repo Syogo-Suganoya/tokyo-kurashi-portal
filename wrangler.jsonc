@@ -1,6 +1,10 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tokyo-kurashi-portal",
+  // ハッカソン運営から付与されたアカウント（tokyo_odh_039）。
+  // 秘匿情報ではない。**複数のアカウントに所属していると wrangler が非対話でどちらか選べず、
+  // `next dev` のバインディング取得が「アカウントを選べない」で失敗する**ため明示しておく。
+  "account_id": "a128e75b7210f99f780cccff2c2cf5ab",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-17",
   // nodejs_compat は OpenNext が必須とする。

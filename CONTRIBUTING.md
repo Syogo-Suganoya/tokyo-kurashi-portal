@@ -1,7 +1,7 @@
 # 開発の手引き
 
 このリポジトリを触るときの手順と約束をまとめる。
-何を作っているかは [README.md](README.md) を、なぜその形なのかは [設計書](docs/21_kurashi_michishirube_portal.md) を、公開のしかたは [DEPLOY.md](docs/DEPLOY.md) を見る。
+何を作っているかは [README.md](README.md) を、なぜその形なのかは [設計書](_memo/原案.md) を、公開のしかたは [DEPLOY.md](_memo/DEPLOY.md) を見る。
 
 ## 必要なもの
 
@@ -33,6 +33,9 @@ npm run preview        # workerd で実際に動かす（http://localhost:8788�
 `npm run dev` は素の Next.js で動くので、**本番と動く場所が違う**。
 バインディングやランタイムの差が絡む変更をしたら `preview` まで通す。
 
+`check:types` は先に `next typegen` を走らせる。`PageProps` / `LayoutProps` は Next.js が
+生成する型なので、**クローン直後や `.next` を消した後は生成しないと型検査が落ちる**。
+
 型検査が2本に分かれているのは、アプリ（Cloudflare Workers）と取り込みスクリプト（Node）で
 実行環境が本当に違うため。workerd の型は `Buffer` などのグローバルを自前で宣言していて、
 @types/node と衝突する。`check:types` が両方をまとめて走らせる。
@@ -52,7 +55,8 @@ src/
   app/                  画面（/gomi /bouhan /manabi /barrierfree /chat）
 scripts/                取り込みスクリプトと検証
 assets/                 OGP画像・アイコンのSVG原本
-docs/                   設計書・提出フォーム原稿・デプロイ手順
+docs/                   構成図（architecture.py / .png）と調査データ
+_memo/                  原案・デプロイ手順・提出フォーム下書き・プレゼン原稿・デモ用入力値
 wrangler.jsonc          Worker名・AIバインディング・使うモデル
 .github/workflows/      main への push で Cloudflare へデプロイする CD
 open-next.config.ts     Next.js を Workers に載せるための設定
@@ -99,8 +103,11 @@ cloudflare-env.d.ts     **生成物**。`npm run cf-typegen` で作り直して�
 - 繋がらない・ツールが選ばれない・引数が壊れている、のどれでもキーワード判定へ落ちる。
   **どの経路で答えたかは必ず画面に出す。** AIが落ちていることを隠さない（設計書 §4.4）
 
-モデルは入力の言葉を書き換えてくることがある（「西新宿７丁目」→「西新宿七丁目」など）。
-**プロンプトで頼むだけにせず、検索側で受け止める**（`src/lib/text.ts` の漢数字の畳み込み）。
+モデルは入力の言葉を書き換えてくる（「西新宿７丁目」→「西新宿七丁目」、さらに「七丁**部**」まで実測）。
+**プロンプトで頼むだけにせず、受け取る側で吸収する。** 2段構えにしてある。
+
+1. `src/lib/text.ts` … 漢数字の丁目を数字に畳む（「七丁目」→「7丁目」）
+2. `src/app/api/chat/route.ts` … それでも0件なら `townFromText` で住民の文から取り直して引き直す
 
 ## データの取り込み
 
@@ -177,6 +184,10 @@ npm run cf-typegen     # cloudflare-env.d.ts を作り直す
 
 バインディングや `vars` を足したのに型が付かないときは、これを忘れている。
 生成された `cloudflare-env.d.ts` は**コミットする**（無いと型検査が通らない）。
+
+**`.open-next/` がある状態で生成しないこと。** あると `WORKER_SELF_REFERENCE` の型が
+`.open-next/worker` を指す形になり、ビルド前に型検査を走らせる場面（CIのビルドジョブ）で
+参照先が無くて落ちる。`rm -rf .open-next` してから生成する。
 
 ## まだ無いもの
 
