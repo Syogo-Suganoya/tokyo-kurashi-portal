@@ -9,6 +9,7 @@
 import Link from 'next/link';
 
 import { AnswerCard } from '@/components/AnswerCard';
+import { SkipToAnswer } from '@/components/SkipToAnswer';
 import { Pictogram } from '@/components/Pictogram';
 import { FacilityMap } from '@/components/FacilityMap';
 import {
@@ -50,6 +51,7 @@ export default async function ManabiPage({ searchParams }: PageProps<'/manabi'>)
         </Link>
       </p>
       <h1 className="signboard mt-2 text-3xl">学びと体験の場をさがす</h1>
+      <SkipToAnswer />
       <p className="mt-3 max-w-3xl leading-relaxed text-muted">
         図書館・博物館・公民館・青少年施設などは、種別ごとに別々のサイトで案内されています。
         ここでは東京都教育庁が公開する9種別を
@@ -131,7 +133,7 @@ export default async function ManabiPage({ searchParams }: PageProps<'/manabi'>)
         </div>
       </form>
 
-      <div className="mt-8">
+      <div id="answer" tabIndex={-1} className="mt-8">
         <AnswerCard result={result} />
       </div>
 

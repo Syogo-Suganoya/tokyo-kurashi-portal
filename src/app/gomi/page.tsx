@@ -9,6 +9,7 @@
 import Link from 'next/link';
 
 import { AnswerCard } from '@/components/AnswerCard';
+import { SkipToAnswer } from '@/components/SkipToAnswer';
 import { Pictogram } from '@/components/Pictogram';
 import { SavedMunicipalityLinks } from '@/components/SavedMunicipalityLinks';
 import { MUNICIPALITIES } from '@/data/municipalities';
@@ -36,6 +37,7 @@ export default async function GomiPage({ searchParams }: PageProps<'/gomi'>) {
         </Link>
       </p>
       <h1 className="signboard mt-2 text-3xl">ごみの分別を調べる</h1>
+      {result && <SkipToAnswer />}
       <p className="mt-3 leading-relaxed text-muted">
         東京都オープンデータから取り込んだ分別データで、その場でお答えします。
         分別区分は<strong className="text-foreground">自治体の公式表記のまま</strong>
@@ -103,7 +105,7 @@ export default async function GomiPage({ searchParams }: PageProps<'/gomi'>) {
       </form>
 
       {result && (
-        <div className="mt-8">
+        <div id="answer" tabIndex={-1} className="mt-8">
           <AnswerCard result={result} />
 
           {result.alternatives.length > 0 && (

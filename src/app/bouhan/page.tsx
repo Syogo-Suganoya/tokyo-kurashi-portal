@@ -9,6 +9,7 @@
 import Link from 'next/link';
 
 import { AnswerCard } from '@/components/AnswerCard';
+import { SkipToAnswer } from '@/components/SkipToAnswer';
 import { searchBouhan } from '@/lib/bouhan/search';
 
 export const metadata = {
@@ -37,6 +38,7 @@ export default async function BouhanPage({ searchParams }: PageProps<'/bouhan'>)
         </Link>
       </p>
       <h1 className="signboard mt-2 text-3xl">町丁ごとの犯罪認知件数を調べる</h1>
+      {results.length > 0 && <SkipToAnswer />}
       <p className="mt-3 max-w-3xl leading-relaxed text-muted">
         警視庁が公開している町丁別の認知件数を、そのまま数字でお見せします。
         2つ入力すると並べて比べられます。前年からの増減も併せて出します。
@@ -92,7 +94,11 @@ export default async function BouhanPage({ searchParams }: PageProps<'/bouhan'>)
       </form>
 
       {results.length > 0 && (
-        <div className={`mt-8 grid gap-6 ${results.length > 1 ? 'lg:grid-cols-2' : ''}`}>
+        <div
+          id="answer"
+          tabIndex={-1}
+          className={`mt-8 grid gap-6 ${results.length > 1 ? 'lg:grid-cols-2' : ''}`}
+        >
           {results.map(({ area, result }) => (
             <div key={area}>
               <AnswerCard result={result} />

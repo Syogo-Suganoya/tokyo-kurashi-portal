@@ -41,10 +41,14 @@ export function AnswerCard({ result }: { result: AnswerResult }) {
       {result.answer ? (
         <div className="border-b border-line p-6">
           <p className="text-sm text-muted">{result.answer.subject}</p>
-          <p className="mt-2 flex items-center gap-3 text-3xl font-bold">
+          {/*
+            答えは見出しにする。読み上げで見出しを辿る人が、**最初に答えに着く**ようにするため。
+            ここが段落のままだと、この画面で一番重要な文が見出しの一覧に出てこない。
+          */}
+          <h2 className="mt-2 flex items-center gap-3 text-3xl font-bold">
             <Pictogram name={result.answer.icon} className="h-9 w-9 shrink-0 text-accent" />
             <span>{result.answer.headline}</span>
-          </p>
+          </h2>
           {result.answer.facts.length > 0 && (
             <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2">
               {result.answer.facts.map((fact) => (
@@ -63,7 +67,7 @@ export function AnswerCard({ result }: { result: AnswerResult }) {
         </div>
       ) : (
         <div className="border-b border-line p-6">
-          <p className="text-xl font-bold">{result.headline}</p>
+          <h2 className="text-xl font-bold">{result.headline}</h2>
         </div>
       )}
 

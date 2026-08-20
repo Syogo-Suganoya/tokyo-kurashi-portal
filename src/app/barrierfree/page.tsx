@@ -12,6 +12,7 @@
 import Link from 'next/link';
 
 import { AnswerCard } from '@/components/AnswerCard';
+import { SkipToAnswer } from '@/components/SkipToAnswer';
 import { BarrierFreeMap } from '@/components/BarrierFreeMap';
 import { Pictogram } from '@/components/Pictogram';
 import { MANABI_MUNICIPALITIES } from '@/lib/manabi/search';
@@ -59,6 +60,7 @@ export default async function BarrierFreePage({ searchParams }: PageProps<'/barr
         </Link>
       </p>
       <h1 className="signboard mt-2 text-3xl">車椅子で行ける場所をさがす</h1>
+      <SkipToAnswer />
       <p className="mt-3 max-w-3xl leading-relaxed text-muted">
         バリアフリーの情報は、東京都の中でも
         {BARRIERFREE_ORGS.map((o) => o.org).join('・')}
@@ -156,7 +158,7 @@ export default async function BarrierFreePage({ searchParams }: PageProps<'/barr
         </div>
       </form>
 
-      <div className="mt-8">
+      <div id="answer" tabIndex={-1} className="mt-8">
         <AnswerCard result={result} />
       </div>
 
