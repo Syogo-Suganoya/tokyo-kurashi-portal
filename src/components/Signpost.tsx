@@ -103,31 +103,10 @@ type Row = { step: string; common: string; ours: string; ourStrong?: boolean };
 
 const ROWS: Row[] = [
   {
-    step: '答えの文章',
-    common: 'AIが書く。もっともらしい誤りが混ざりうる',
-    ours: '書かない。オープンデータの値をそのまま出す',
-    ourStrong: true,
-  },
-  {
-    step: '出典',
-    common: '文章の後ろに参考リンクが付く程度',
-    ours: '出典・時点・カバー範囲を必ず表示する',
-  },
-  {
-    step: '案内するURL',
-    common: 'AIが生成し、存在しないURLが混ざることがある',
-    ours: '人が確認した一覧の中からしか選べない',
-    ourStrong: true,
-  },
-  {
     step: '答えられないとき',
     common: '推測で埋めるか、曖昧に濁す',
     ours: 'できないことを書き、担当する公式サービスへ送る',
-  },
-  {
-    step: 'AIが止まったとき',
-    common: '何も答えられなくなる',
-    ours: 'キーワード判定に切り替えて動き続ける',
+    ourStrong: true,
   },
 ];
 

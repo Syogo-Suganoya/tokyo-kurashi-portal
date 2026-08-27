@@ -14,70 +14,9 @@
 
 import Link from 'next/link';
 
-import { Pictogram, type ToolIcon } from '@/components/Pictogram';
-import { AnswerPath, Contrast } from '@/components/Signpost';
+import { Contrast } from '@/components/Signpost';
 import { CURATED_LINKS, getLink, type LinkId } from '@/data/links';
-import { BARRIERFREE_ORGS, BARRIERFREE_TOTAL } from '@/lib/barrierfree/search';
-import { BOUHAN_AREA_COUNT, BOUHAN_YEAR } from '@/lib/bouhan/search';
-import { GOMI_ITEM_COUNT, GOMI_MUNICIPALITY_COUNT } from '@/lib/gomi/search';
-import { MANABI_FACILITY_COUNT } from '@/lib/manabi/search';
-
-type ToolHref = '/gomi' | '/bouhan' | '/manabi' | '/barrierfree';
-
-type Tool = {
-  href: ToolHref;
-  icon: ToolIcon;
-  color: string;
-  title: string;
-  figure: string;
-  unit: string;
-  body: string;
-  /** その画面が既存のサービスに対して何を足しているか */
-  edge: string;
-};
-
-const TOOLS: Tool[] = [
-  {
-    href: '/gomi',
-    icon: 'gomi',
-    color: 'var(--route-gomi)',
-    title: 'ごみの分別',
-    figure: GOMI_ITEM_COUNT.toLocaleString(),
-    unit: `品目 / ${GOMI_MUNICIPALITY_COUNT}自治体`,
-    body: '品目名を入れると、お住まいの自治体の表記のまま、分別区分・注意点・粗大ごみの料金が出ます。',
-    edge: `区市町村ごとに別サイトになっている分別の案内を、${GOMI_MUNICIPALITY_COUNT}自治体ぶん同じ画面で引けます。`,
-  },
-  {
-    href: '/bouhan',
-    icon: 'bouhan',
-    color: 'var(--route-bouhan)',
-    title: '町丁ごとの犯罪認知件数',
-    figure: BOUHAN_AREA_COUNT.toLocaleString(),
-    unit: `町丁 / ${BOUHAN_YEAR}`,
-    body: '2つ入力すると並べて比べられます。前年からの増減と、何の手口でその件数になっているかも併せて出します。',
-    edge: '地図で見る既存のサービスではしにくい、引っ越し先候補どうしの数字の比較ができます。',
-  },
-  {
-    href: '/manabi',
-    icon: 'manabi',
-    color: 'var(--route-manabi)',
-    title: '学びと体験の場',
-    figure: MANABI_FACILITY_COUNT.toLocaleString(),
-    unit: '施設 / 9種別',
-    body: '図書館・博物館・公民館・青少年施設などを1つの地図にまとめました。',
-    edge: '施設の種類ごとにサイトが分かれている現状に対して、種類をまたいで一望できます。',
-  },
-  {
-    href: '/barrierfree',
-    icon: 'barrierfree',
-    color: 'var(--route-barrierfree)',
-    title: '車椅子で行ける場所',
-    figure: BARRIERFREE_TOTAL.toLocaleString(),
-    unit: `か所 / ${BARRIERFREE_ORGS.length}部署`,
-    body: '飲食店・鉄道駅・公共施設を、必要な設備の条件で絞り込めます。',
-    edge: '3つの部署が別々に公開しているデータを、行けるかどうかの1つの軸にまとめています。',
-  },
-];
+import { GOMI_MUNICIPALITY_COUNT } from '@/lib/gomi/search';
 
 /**
  * 「こんなことが聞けます」の例。
@@ -86,6 +25,9 @@ const TOOLS: Tool[] = [
  * その場で答えるものと、公式のサービスへご案内するものを混ぜて並べ、
  * どちらであっても行き先があることを見せる。
  */
+/** その場で答えられる4分野の画面 */
+type ToolHref = '/gomi' | '/bouhan' | '/manabi' | '/barrierfree';
+
 type Example =
   | { ask: string; answer: 'self'; href: ToolHref; label: string }
   | { ask: string; answer: 'guide'; linkId: LinkId };
@@ -229,74 +171,14 @@ export default function Home() {
         </p>
       </section>
 
-      {/* 自前で答える4つ */}
-      <section id="tools" className="scroll-mt-4 pt-16">
-        <p className="eyebrow text-muted">その場でお答えする4つ</p>
-        <h2 className="signboard mt-3 text-2xl">チャットを使わずに直接ひらく</h2>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          {TOOLS.map((tool) => (
-            <Link
-              key={tool.href}
-              href={tool.href}
-              className="relative overflow-hidden rounded-xl border border-line bg-surface p-5 pl-6 transition-colors hover:border-accent"
-            >
-              {/* 分野の色帯。装飾ではなく見分けるための印 */}
-              <span
-                aria-hidden
-                className="absolute inset-y-0 left-0 w-1.5"
-                style={{ background: tool.color }}
-              />
-              <div className="flex items-start gap-3">
-                <span style={{ color: tool.color }}>
-                  <Pictogram name={tool.icon} />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="signboard text-lg">{tool.title}</p>
-                  <p className="mt-2">
-                    <span className="figure text-3xl font-bold" style={{ color: tool.color }}>
-                      {tool.figure}
-                    </span>
-                    <span className="ml-2 text-xs text-muted">{tool.unit}</span>
-                  </p>
-                </div>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed">{tool.body}</p>
-              <p className="mt-2 border-t border-line pt-2 text-xs leading-relaxed text-muted">
-                {tool.edge}
-              </p>
-              <p className="mt-3 text-sm font-bold text-accent">ひらく →</p>
-            </Link>
-          ))}
-        </div>
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted">
-          この4つを自前で持っているのは、
-          <strong className="text-foreground">
-            行政が公開しているデータが揃っていて、しかもばらばらのままだと探しにくい
-          </strong>
-          からです。それ以外は、すでによくできた公式のサービスがあるので、そちらへご案内します。
-        </p>
-      </section>
-
-      {/* しくみ。関心のある人向けの補足として下に置く */}
+      {/* よくあるAIチャットとの違い。関心のある人向けの補足として下に置く */}
       <section id="how" className="scroll-mt-4 pt-16">
         <p className="eyebrow text-muted">しくみ（補足）</p>
-        <h2 className="signboard mt-3 text-2xl">答えはどこから来るのか</h2>
-        <p className="mt-2 max-w-2xl leading-relaxed text-muted">
-          画面に出ている分別区分も件数も施設名も、
-          <strong className="text-foreground">行政が公開しているデータそのもの</strong>
-          です。AIがするのは、あなたの言葉がどの分野かを判定して必要な言葉を取り出すことだけで、
-          <strong className="text-foreground">答えの文章は書きません</strong>。
-          行政の情報を扱うので、正しさを人が確かめられる形にしています。
-        </p>
-        <div className="mt-5">
-          <AnswerPath />
-        </div>
-
-        <h3 className="signboard mt-10 text-lg">よくあるAIチャットとの違い</h3>
+        <h2 className="signboard mt-3 text-2xl">よくあるAIチャットとの違い</h2>
         <p className="mt-2 max-w-2xl leading-relaxed text-muted">
           資料を検索してAIに要約させる作りとは、AIに任せる範囲の切り方が違います。
         </p>
-        <div className="mt-4">
+        <div className="mt-5">
           <Contrast />
         </div>
       </section>
